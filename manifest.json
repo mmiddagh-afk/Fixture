@@ -1,0 +1,17 @@
+{
+  "short_name": "Fixture 2026",
+  "name": "Fixture Mundial 2026 - Tiempo Real",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0a0e1a",
+  "display": "standalone",
+  "orientation": "portrait"
+}

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>Copa del Mundo 2026 - Fixture BOT</title>
+  
+  <!-- Google Fonts: Outfit (Display) & Inter (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  
+  <!-- Preloader Premium (Punto 15) -->
+  <div class="app-preloader" id="app-preloader">
+    <div class="preloader-content">
+      <div class="preloader-image-wrapper">
+        <img src="Preload.png" class="preloader-img" alt="Copa del Mundo 2026">
+        <div class="preloader-shine"></div>
+      </div>
+      <h2 class="preloader-title">MUNDIAL 2026</h2>
+      <p class="preloader-subtitle">Cargando Fixture Oficial...</p>
+      <div class="preloader-progress-bar">
+        <div class="preloader-progress-fill" id="preloader-progress-fill"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Canvas para animación de confetti (Punto 11) -->
+  <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999;"></canvas>
+
+  <!-- Pull to Refresh loader (Punto 14) -->
+  <div class="ptr-element" id="ptr-element">
+    <div class="ptr-icon-wrapper">
+      <span class="ptr-soccer-ball">⚽</span>
+    </div>
+    <span class="ptr-text">Deslizar para actualizar...</span>
+  </div>
+  
+  <!-- Ambient background glows -->
+  <div class="glow-bg-1"></div>
+  <div class="glow-bg-2"></div>
+
+  <!-- SPA Container -->
+  <div class="app-container">
+    
+    <!-- Premium Header -->
+    <header class="app-header">
+      <div class="header-top">
+        <span class="host-badge">🇨🇦 🇲🇽 🇺🇸 CAN · MEX · USA 2026</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn-install" id="pwa-install-btn" style="display: none;">📲 Instalar</button>
+          <button class="btn-alerts-toggle" id="btn-alerts-toggle" title="Activar Alertas (15 min antes)">🔔 Alertas</button>
+          <button class="btn-fav-toggle" id="btn-fav-toggle" title="Selección Favorita">⭐ Favorito</button>
+          <div class="timezone-badge">🇧🇴 Hora Bolivia</div>
+        </div>
+      </div>
+      <h1 class="app-title">MUNDIAL 2026</h1>
+      <p class="app-subtitle">Fixture & Resultados en Tiempo Real</p>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="app-nav">
+      <button class="nav-tab active" data-tab="hoy">
+        <span class="tab-icon">📅</span>
+        <span class="tab-label">Hoy</span>
+      </button>
+      <button class="nav-tab" data-tab="grupos">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">Grupos</span>
+      </button>
+      <button class="nav-tab" data-tab="eliminatorias">
+        <span class="tab-icon">⚡</span>
+        <span class="tab-label">Llaves</span>
+      </button>
+      <button class="nav-tab" data-tab="tablas">
+        <span class="tab-icon">📊</span>
+        <span class="tab-label">Tablas</span>
+      </button>
+      <div class="nav-underline"></div>
+    </nav>
+
+    <!-- Main Views Container -->
+    <main class="app-main">
+      
+      <!-- View: Hoy -->
+      <section id="view-hoy" class="view-section active">
+        <!-- Banner de Selección Favorita (Punto 8 & 12) -->
+        <div id="fav-team-banner-container"></div>
+
+        <div class="section-header">
+          <h2>Partidos de Hoy</h2>
+          <span class="current-date-lbl" id="hoy-date-label">Calculando...</span>
+        </div>
+        <div class="matches-list" id="list-hoy">
+          <!-- Dynamically populated or Skeletons -->
+        </div>
+        
+        <!-- Trivia Histórica (Punto 10) -->
+        <div class="trivia-container-wrapper" id="trivia-container-wrapper">
+          <div class="trivia-card" id="trivia-card">
+            <div class="trivia-header">
+              <span class="trivia-tag">💡 ¿SABÍAS QUE...?</span>
+              <button class="btn-next-trivia" id="btn-next-trivia" title="Siguiente curiosidad">🎲 Siguiente</button>
+            </div>
+            <h4 class="trivia-title" id="trivia-title">Cargando curiosidad...</h4>
+            <p class="trivia-text" id="trivia-text">Espere por favor...</p>
+          </div>
+        </div>
+
+        <button class="btn-toggle-calendar" id="btn-toggle-cal">📅 Ver Calendario Completo</button>
+      </section>
+
+      <!-- View: Grupos -->
+      <section id="view-grupos" class="view-section">
+        <div class="section-header">
+          <h2>Fase de Grupos</h2>
+          <div class="filter-wrapper">
+            <select id="group-filter" class="group-dropdown">
+              <option value="ALL">Todos los Grupos</option>
+              <option value="A">Grupo A</option>
+              <option value="B">Grupo B</option>
+              <option value="C">Grupo C</option>
+              <option value="D">Grupo D</option>
+              <option value="E">Grupo E</option>
+              <option value="F">Grupo F</option>
+              <option value="G">Grupo G</option>
+              <option value="H">Grupo H</option>
+              <option value="I">Grupo I</option>
+              <option value="J">Grupo J</option>
+              <option value="K">Grupo K</option>
+              <option value="L">Grupo L</option>
+            </select>
+          </div>
+        </div>
+        <div class="groups-grid" id="groups-container">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- View: Eliminatorias -->
+      <section id="view-eliminatorias" class="view-section">
+        <div class="section-header">
+          <h2>Fase Eliminatoria</h2>
+        </div>
+        <div class="bracket-outer">
+          <div class="bracket-container" id="bracket-container">
+            <!-- Dynamically populated horizontal bracket -->
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Tablas -->
+      <section id="view-tablas" class="view-section">
+        <!-- Dashboard de Estadísticas Rápidas (Punto 3) -->
+        <div class="tournament-stats-dashboard" id="tournament-stats-dashboard">
+          <!-- Dinámico -->
+        </div>
+
+        <div class="section-header">
+          <h2>Tablas de Posiciones</h2>
+        </div>
+        <div class="tables-container" id="tables-container">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+    </main>
+    
+    <!-- Premium Footer -->
+    <footer class="app-footer">
+      <p>Copa Mundial de la FIFA 2026™ Fixture Tracker</p>
+      <p class="footer-note">Bolivia Local Time zone (UTC-4)</p>
+    </footer>
+
+  </div>
+
+  <!-- Floating Simulator Button -->
+  <button class="btn-simulator-trigger" id="sim-trigger" title="Abrir Simulador en Tiempo Real">
+    <span class="pulse-ring"></span>
+    <span class="sim-icon">⚽</span>
+    <span class="sim-text">Simulador</span>
+  </button>
+
+  <!-- Simulator Drawer Panel -->
+  <div class="simulator-drawer" id="sim-drawer">
+    <div class="drawer-header">
+      <h3>⚽ Simulador de Partidos</h3>
+      <button class="btn-close-drawer" id="sim-close">✕</button>
+    </div>
+    <div class="drawer-body">
+      <p class="sim-info-txt">Modificá los resultados para ver cómo cambia la tabla de posiciones y las eliminatorias en tiempo real.</p>
+      
+      <div class="sim-form-group">
+        <label for="sim-match-select">Seleccionar Partido:</label>
+        <select id="sim-match-select" class="sim-select">
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+
+      <div class="sim-score-controller">
+        
+        <div class="sim-team-block home-block">
+          <span class="sim-flag" id="sim-home-flag">🏁</span>
+          <span class="sim-team-name" id="sim-home-name">Local</span>
+          <div class="score-buttons">
+            <button class="btn-score-adjust" data-team="home" data-action="dec">-</button>
+            <span class="sim-score" id="sim-home-score">0</span>
+            <button class="btn-score-adjust" data-team="home" data-action="inc">+</button>
+          </div>
+        </div>
+
+        <div class="sim-vs-divider">VS</div>
+
+        <div class="sim-team-block away-block">
+          <span class="sim-flag" id="sim-away-flag">🏁</span>
+          <span class="sim-team-name" id="sim-away-name">Visitante</span>
+          <div class="score-buttons">
+            <button class="btn-score-adjust" data-team="away" data-action="dec">-</button>
+            <span class="sim-score" id="sim-away-score">0</span>
+            <button class="btn-score-adjust" data-team="away" data-action="inc">+</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="sim-state-controls">
+        
+        <div class="sim-form-group-inline">
+          <label for="sim-status-select">Estado:</label>
+          <select id="sim-status-select" class="sim-select">
+            <option value="upcoming">Próximo</option>
+            <option value="live">En Vivo</option>
+            <option value="finished">Finalizado</option>
+          </select>
+        </div>
+
+        <div class="sim-form-group-inline" id="sim-minute-wrapper" style="display: none;">
+          <label for="sim-minute-input">Minuto:</label>
+          <div class="minute-adjuster">
+            <button class="btn-min-adjust" id="sim-min-dec">-</button>
+            <span id="sim-minute-val">45'</span>
+            <button class="btn-min-adjust" id="sim-min-inc">+</button>
+          </div>
+        </div>
+
+      </div>
+
+      <button class="btn-reset-simulator" id="sim-reset">Restablecer Todo el Mundial</button>
+
+    </div>
+  </div>
+  
+  <div class="drawer-overlay" id="sim-overlay"></div>
+
+  <!-- Modal para seleccionar selección favorita (Punto 8) -->
+  <div class="fav-selector-modal" id="fav-selector-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>⭐ Seleccionar Selección Favorita</h3>
+        <button class="modal-close-btn" id="fav-modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Elegí tu selección favorita para seguir sus partidos de cerca, ver estadísticas y activar la cuenta regresiva animada.</p>
+        <div class="modal-search-wrapper">
+          <input type="text" id="fav-team-search" placeholder="🔍 Buscar selección... (ej. Argentina, Bolivia, México)">
+        </div>
+        <div class="fav-teams-grid" id="fav-teams-grid">
+          <!-- Se llena dinámicamente -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="fav-modal-overlay"></div>
+
+  <!-- Application Logic -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
