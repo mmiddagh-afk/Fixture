@@ -1610,6 +1610,44 @@ function initIosInstallPrompt() {
   }
 }
 
+function setupResetCacheHandler() {
+  const btn = document.getElementById('btn-reset-cache');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    if (confirm('¿Estás seguro de limpiar toda la caché de la aplicación, desregistrar el Service Worker y restablecer los datos del fixture de cero?')) {
+      // 1. Limpiar LocalStorage y SessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // 2. Limpiar Cache Storage
+      if ('caches' in window) {
+        try {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(key => caches.delete(key)));
+          console.log('Cache Storage eliminado con éxito');
+        } catch (e) {
+          console.error('Error al eliminar Cache Storage:', e);
+        }
+      }
+
+      // 3. Desregistrar Service Worker
+      if ('serviceWorker' in navigator) {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map(r => r.unregister()));
+          console.log('Service Workers desregistrados con éxito');
+        } catch (e) {
+          console.error('Error al desregistrar Service Worker:', e);
+        }
+      }
+
+      // 4. Reinicio forzado
+      window.location.reload(true);
+    }
+  });
+}
+
 // Initialize application
 window.addEventListener('DOMContentLoaded', () => {
   initPreloader();
@@ -1624,6 +1662,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initPullToRefresh();
   initTabRouter();
   renderActiveTab();
+  setupResetCacheHandler();
 
   // Registrar eventos para el modal de instalación de iOS
   const iosCloseBtn = document.getElementById('ios-modal-close');

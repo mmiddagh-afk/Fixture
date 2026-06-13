@@ -1152,7 +1152,7 @@ html, body {
 /* ==========================================================================
    ALERTAS & FAVORITO BUTTONS (HEADER)
    ========================================================================== */
-.btn-alerts-toggle, .btn-fav-toggle {
+.btn-alerts-toggle, .btn-fav-toggle, .btn-reset-cache {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
@@ -1168,7 +1168,7 @@ html, body {
   transition: var(--transition-smooth);
 }
 
-.btn-alerts-toggle:hover, .btn-fav-toggle:hover {
+.btn-alerts-toggle:hover, .btn-fav-toggle:hover, .btn-reset-cache:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
 }
