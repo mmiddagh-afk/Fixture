@@ -91,6 +91,9 @@
       
       <!-- View: Hoy -->
       <section id="view-hoy" class="view-section active">
+        <!-- Widget de Estadísticas del Prode -->
+        <div class="prode-stats-banner" id="prode-stats-banner" style="display: none;"></div>
+
         <!-- Banner de Selección Favorita (Punto 8 & 12) -->
         <div id="fav-team-banner-container"></div>
 
@@ -182,20 +185,20 @@
   </div>
 
   <!-- Floating Simulator Button -->
-  <button class="btn-simulator-trigger" id="sim-trigger" title="Abrir Simulador en Tiempo Real">
+  <button class="btn-simulator-trigger" id="sim-trigger" title="Cargar Resultados Reales/Oficiales">
     <span class="pulse-ring"></span>
-    <span class="sim-icon">⚽</span>
-    <span class="sim-text">Simulador</span>
+    <span class="sim-icon">🏆</span>
+    <span class="sim-text">Resultados</span>
   </button>
 
   <!-- Simulator Drawer Panel -->
   <div class="simulator-drawer" id="sim-drawer">
     <div class="drawer-header">
-      <h3>⚽ Simulador de Partidos</h3>
+      <h3>🏆 Resultados Reales (Oficiales)</h3>
       <button class="btn-close-drawer" id="sim-close">✕</button>
     </div>
     <div class="drawer-body">
-      <p class="sim-info-txt">Modificá los resultados para ver cómo cambia la tabla de posiciones y las eliminatorias en tiempo real.</p>
+      <p class="sim-info-txt">Cargá los resultados oficiales o simulados de los partidos para actualizar las tablas de posiciones y las llaves en tiempo real.</p>
       
       <div class="sim-form-group">
         <label for="sim-match-select">Seleccionar Partido:</label>

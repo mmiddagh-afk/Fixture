@@ -12,7 +12,8 @@ const state = {
   favoriteTeam: localStorage.getItem('fav_team') || null,
   allowNotifications: localStorage.getItem('allow_notifications') === 'true',
   currentTriviaIndex: Math.floor(Math.random() * TRIVIA_FACTS.length),
-  isLoading: false
+  isLoading: false,
+  predictions: JSON.parse(localStorage.getItem('fixture_2026_predictions') || '{}')
 };
 
 // Cargar o inicializar partidos con merge inteligente para mantener simulaciones pero actualizar datos oficiales
@@ -224,6 +225,137 @@ function updateKnockoutTeams() {
 }
 
 // ==========================================================================
+// LÓGICA DEL PRODE / JUEGO DE PREDICCIONES
+// ==========================================================================
+function calculateProdePoints() {
+  let points = 0;
+  let exact = 0;
+  let outcome = 0;
+  let predictedCount = 0;
+  let finishedPredictedCount = 0;
+
+  predictedCount = Object.keys(state.predictions).length;
+
+  state.matches.forEach(match => {
+    if (match.status === 'finished') {
+      const pred = state.predictions[match.id];
+      if (pred !== undefined && pred !== null) {
+        finishedPredictedCount++;
+        const actualHome = match.homeScore;
+        const actualAway = match.awayScore;
+        const predHome = pred.homeScore;
+        const predAway = pred.awayScore;
+
+        if (actualHome === predHome && actualAway === predAway) {
+          points += 3;
+          exact++;
+        } else {
+          const actualResult = Math.sign(actualHome - actualAway);
+          const predResult = Math.sign(predHome - predAway);
+          if (actualResult === predResult) {
+            points += 1;
+            outcome++;
+          }
+        }
+      }
+    }
+  });
+
+  const accuracy = finishedPredictedCount > 0 
+    ? Math.round(((exact + outcome) / finishedPredictedCount) * 100) 
+    : 0;
+
+  return {
+    points,
+    exact,
+    outcome,
+    predictedCount,
+    finishedPredictedCount,
+    accuracy
+  };
+}
+
+function renderProdeStatsBanner() {
+  const banner = document.getElementById('prode-stats-banner');
+  if (!banner) return;
+
+  const stats = calculateProdePoints();
+  const totalMatches = state.matches.length;
+  const progressPercent = totalMatches > 0 ? (stats.predictedCount / totalMatches) * 100 : 0;
+
+  banner.style.display = 'flex';
+  banner.innerHTML = `
+    <div class="prode-banner-header">
+      <div class="prode-banner-title">🏆 MI PRODE MUNDIALISTA</div>
+      <div class="prode-score-display">
+        <span class="prode-score-num">${stats.points}</span>
+        <span class="prode-score-lbl">pts</span>
+      </div>
+    </div>
+    <div class="prode-stats-grid">
+      <div class="prode-stat-box">
+        <span class="prode-stat-num">${stats.exact}</span>
+        <span class="prode-stat-lbl">🌟 Exactos</span>
+      </div>
+      <div class="prode-stat-box">
+        <span class="prode-stat-num">${stats.outcome}</span>
+        <span class="prode-stat-lbl">⚡ Aciertos</span>
+      </div>
+      <div class="prode-stat-box">
+        <span class="prode-stat-num">${stats.accuracy}%</span>
+        <span class="prode-stat-lbl">Efectividad</span>
+      </div>
+    </div>
+    <div class="prode-progress-container">
+      <div class="prode-progress-header">
+        <span>Pronósticos realizados</span>
+        <span>${stats.predictedCount} / ${totalMatches}</span>
+      </div>
+      <div class="prode-progress-bg">
+        <div class="prode-progress-bar" style="width: ${progressPercent}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+function getMatchPredictionComparisonHTML(match) {
+  const pred = state.predictions[match.id];
+  if (!pred) {
+    return `
+      <div class="card-prediction-comparison">
+        <span class="prediction-comp-text">Sin pronóstico registrado</span>
+        <span class="prode-badge badge-miss">❌ 0 pts</span>
+      </div>
+    `;
+  }
+
+  const actualHome = match.homeScore;
+  const actualAway = match.awayScore;
+  const predHome = pred.homeScore;
+  const predAway = pred.awayScore;
+
+  let badgeHTML = '';
+  if (actualHome === predHome && actualAway === predAway) {
+    badgeHTML = `<span class="prode-badge badge-exact">🌟 Exacto (+3 pts)</span>`;
+  } else {
+    const actualResult = Math.sign(actualHome - actualAway);
+    const predResult = Math.sign(predHome - predAway);
+    if (actualResult === predResult) {
+      badgeHTML = `<span class="prode-badge badge-outcome">⚡ Acierto (+1 pt)</span>`;
+    } else {
+      badgeHTML = `<span class="prode-badge badge-miss">❌ Fallado (0 pts)</span>`;
+    }
+  }
+
+  return `
+    <div class="card-prediction-comparison">
+      <span class="prediction-comp-text">Tu pronóstico: <strong>${predHome} - ${predAway}</strong></span>
+      ${badgeHTML}
+    </div>
+  `;
+}
+
+// ==========================================================================
 // RENDERIZADO DE PARTIDOS & CARDS
 // ==========================================================================
 function getTeamDisplay(teamCodeOrPlaceholder) {
@@ -248,6 +380,7 @@ function renderMatchCard(match) {
   let cardClass = 'match-card';
   let progressHTML = '';
   let scoreHTML = '';
+  let comparisonHTML = '';
 
   if (match.status === 'live') {
     cardClass += ' live-card';
@@ -261,20 +394,40 @@ function renderMatchCard(match) {
         <div class="live-progress-fill" style="width: ${progressPercent}%"></div>
       </div>
     `;
+    comparisonHTML = getMatchPredictionComparisonHTML(match);
   } else if (match.status === 'finished') {
     statusHTML = `<span class="match-stage-badge">Finalizado (FT)</span>`;
     scoreHTML = `<span class="score-text">${match.homeScore} - ${match.awayScore}</span>`;
+    comparisonHTML = getMatchPredictionComparisonHTML(match);
   } else {
     // Upcoming
     const cd = getCountdown(match.date, match.time);
     statusHTML = `<span class="match-time-badge">${formatBoliviaTime(match.date, match.time)}</span>`;
     
-    scoreHTML = `
-      <div class="match-score-block">
-        <span class="score-placeholder">VS</span>
-        ${cd ? `<span class="upcoming-countdown">${cd}</span>` : ''}
-      </div>
-    `;
+    if (match.isPlaceholder) {
+      scoreHTML = `
+        <div class="match-score-block">
+          <span class="score-placeholder">VS</span>
+          ${cd ? `<span class="upcoming-countdown">${cd}</span>` : ''}
+        </div>
+      `;
+    } else {
+      const pred = state.predictions[match.id] || { homeScore: 0, awayScore: 0 };
+      scoreHTML = `
+        <div class="match-score-block">
+          <div class="prode-inputs">
+            <button class="btn-prode-adjust" data-match-id="${match.id}" data-team="home" data-action="dec">-</button>
+            <span class="prode-score-val" id="pred-home-${match.id}">${pred.homeScore}</span>
+            <button class="btn-prode-adjust" data-match-id="${match.id}" data-team="home" data-action="inc">+</button>
+            <span class="prode-vs-divider">:</span>
+            <button class="btn-prode-adjust" data-match-id="${match.id}" data-team="away" data-action="dec">-</button>
+            <span class="prode-score-val" id="pred-away-${match.id}">${pred.awayScore}</span>
+            <button class="btn-prode-adjust" data-match-id="${match.id}" data-team="away" data-action="inc">+</button>
+          </div>
+          ${cd ? `<span class="upcoming-countdown" style="margin-top: 4px; display: block; font-size: 0.65rem;">${cd}</span>` : ''}
+        </div>
+      `;
+    }
   }
 
   const groupLabel = match.stage === 'group' ? `Grupo ${match.group}` : 'Eliminatoria';
@@ -303,6 +456,7 @@ function renderMatchCard(match) {
 
       </div>
       ${progressHTML}
+      ${comparisonHTML}
     </div>
   `;
 }
@@ -868,6 +1022,7 @@ function renderHoy() {
   // Renderizar componentes adicionales (Punto 8, 10, 12)
   renderFavoriteBanner();
   renderTrivia();
+  renderProdeStatsBanner();
 
   if (state.showAllChronological) {
     titleLabel.innerText = "Calendario Completo";
@@ -1250,7 +1405,7 @@ function initSimulator() {
 
   // Restablecer Mundial
   document.getElementById('sim-reset').addEventListener('click', () => {
-    if (confirm('¿Estás seguro de reiniciar todos los resultados del Mundial a cero?')) {
+    if (confirm('¿Estás seguro de reiniciar todos los resultados oficiales a cero?')) {
       state.matches = [...INITIAL_MATCHES];
       saveState();
       
@@ -1648,6 +1803,45 @@ function setupResetCacheHandler() {
   });
 }
 
+function setupProdeInputsListener() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-prode-adjust');
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const matchId = Number(btn.getAttribute('data-match-id'));
+    const team = btn.getAttribute('data-team'); // 'home' | 'away'
+    const action = btn.getAttribute('data-action'); // 'inc' | 'dec'
+
+    const match = state.matches.find(m => m.id === matchId);
+    if (!match || match.status !== 'upcoming') return;
+
+    if (!state.predictions[matchId]) {
+      state.predictions[matchId] = { homeScore: 0, awayScore: 0 };
+    }
+
+    const pred = state.predictions[matchId];
+    const scoreKey = team === 'home' ? 'homeScore' : 'awayScore';
+
+    if (action === 'inc') {
+      pred[scoreKey]++;
+    } else {
+      pred[scoreKey] = Math.max(0, pred[scoreKey] - 1);
+    }
+
+    localStorage.setItem('fixture_2026_predictions', JSON.stringify(state.predictions));
+
+    const scoreSpan = document.getElementById(`pred-${team}-${matchId}`);
+    if (scoreSpan) {
+      scoreSpan.innerText = pred[scoreKey];
+    }
+
+    renderProdeStatsBanner();
+  });
+}
+
 // Initialize application
 window.addEventListener('DOMContentLoaded', () => {
   initPreloader();
@@ -1663,6 +1857,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initTabRouter();
   renderActiveTab();
   setupResetCacheHandler();
+  setupProdeInputsListener();
 
   // Registrar eventos para el modal de instalación de iOS
   const iosCloseBtn = document.getElementById('ios-modal-close');
