@@ -293,7 +293,12 @@ function renderMatchCard(match) {
         </div>
 
         <div class="match-score-block">
-          ${match.status !== 'upcoming' ? scoreHTML : scoreHTML}
+          ${scoreHTML}
+        </div>
+
+        <div class="team-display away-team">
+          <span class="team-name-lbl">${awayTeam.name}</span>
+          <span class="team-flag-emoji">${awayTeam.flag}</span>
         </div>
 
       </div>
