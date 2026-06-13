@@ -13,7 +13,8 @@ const state = {
   allowNotifications: localStorage.getItem('allow_notifications') === 'true',
   currentTriviaIndex: Math.floor(Math.random() * TRIVIA_FACTS.length),
   isLoading: false,
-  predictions: JSON.parse(localStorage.getItem('fixture_2026_predictions') || '{}')
+  predictions: JSON.parse(localStorage.getItem('fixture_2026_predictions') || '{}'),
+  prodeEnabled: localStorage.getItem('fixture_2026_prode_enabled') !== 'false'
 };
 
 // Cargar o inicializar partidos con merge inteligente para mantener simulaciones pero actualizar datos oficiales
@@ -279,6 +280,11 @@ function renderProdeStatsBanner() {
   const banner = document.getElementById('prode-stats-banner');
   if (!banner) return;
 
+  if (!state.prodeEnabled) {
+    banner.style.display = 'none';
+    return;
+  }
+
   const stats = calculateProdePoints();
   const totalMatches = state.matches.length;
   const progressPercent = totalMatches > 0 ? (stats.predictedCount / totalMatches) * 100 : 0;
@@ -394,17 +400,21 @@ function renderMatchCard(match) {
         <div class="live-progress-fill" style="width: ${progressPercent}%"></div>
       </div>
     `;
-    comparisonHTML = getMatchPredictionComparisonHTML(match);
+    if (state.prodeEnabled) {
+      comparisonHTML = getMatchPredictionComparisonHTML(match);
+    }
   } else if (match.status === 'finished') {
     statusHTML = `<span class="match-stage-badge">Finalizado (FT)</span>`;
     scoreHTML = `<span class="score-text">${match.homeScore} - ${match.awayScore}</span>`;
-    comparisonHTML = getMatchPredictionComparisonHTML(match);
+    if (state.prodeEnabled) {
+      comparisonHTML = getMatchPredictionComparisonHTML(match);
+    }
   } else {
     // Upcoming
     const cd = getCountdown(match.date, match.time);
     statusHTML = `<span class="match-time-badge">${formatBoliviaTime(match.date, match.time)}</span>`;
     
-    if (match.isPlaceholder) {
+    if (match.isPlaceholder || !state.prodeEnabled) {
       scoreHTML = `
         <div class="match-score-block">
           <span class="score-placeholder">VS</span>
@@ -1842,6 +1852,30 @@ function setupProdeInputsListener() {
   });
 }
 
+function setupProdeToggleHandler() {
+  const btn = document.getElementById('btn-prode-toggle');
+  if (!btn) return;
+
+  if (state.prodeEnabled) {
+    btn.classList.add('active');
+  } else {
+    btn.classList.remove('active');
+  }
+
+  btn.addEventListener('click', () => {
+    state.prodeEnabled = !state.prodeEnabled;
+    localStorage.setItem('fixture_2026_prode_enabled', String(state.prodeEnabled));
+
+    if (state.prodeEnabled) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+
+    renderActiveTab();
+  });
+}
+
 // Initialize application
 window.addEventListener('DOMContentLoaded', () => {
   initPreloader();
@@ -1858,6 +1892,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderActiveTab();
   setupResetCacheHandler();
   setupProdeInputsListener();
+  setupProdeToggleHandler();
 
   // Registrar eventos para el modal de instalación de iOS
   const iosCloseBtn = document.getElementById('ios-modal-close');
