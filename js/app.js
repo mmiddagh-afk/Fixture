@@ -31,9 +31,19 @@ function initMatches() {
         updatedMatch.venue = officialMatch.venue;
         
         if (officialMatch.stage === 'group') {
-          updatedMatch.home = officialMatch.home;
-          updatedMatch.away = officialMatch.away;
-          updatedMatch.group = officialMatch.group;
+          // Si los equipos cambiaron (corrección de base de datos), restablecemos el estado oficial del partido
+          if (savedMatch.home !== officialMatch.home || savedMatch.away !== officialMatch.away) {
+            updatedMatch.home = officialMatch.home;
+            updatedMatch.away = officialMatch.away;
+            updatedMatch.group = officialMatch.group;
+            updatedMatch.status = officialMatch.status;
+            updatedMatch.homeScore = officialMatch.homeScore;
+            updatedMatch.awayScore = officialMatch.awayScore;
+          } else {
+            updatedMatch.home = officialMatch.home;
+            updatedMatch.away = officialMatch.away;
+            updatedMatch.group = officialMatch.group;
+          }
         }
 
         // Si el partido ya finalizó oficialmente, forzamos el resultado oficial

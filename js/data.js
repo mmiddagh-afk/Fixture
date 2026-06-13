@@ -145,7 +145,6 @@ function generateGroupMatches() {
     m(29, "group", "A", "2026-06-18", "21:00", "MEX", "KOR", "Estadio Guadalajara 🇲🇽"),
 
     // === 19 de Junio ===
-    m(30, "group", "D", "2026-06-19", "15:00", "USA", "AUS", "Lumen Field, Seattle 🇺🇸"),
     m(31, "group", "C", "2026-06-19", "18:00", "SCO", "MAR", "Gillette Stadium, Boston 🇺🇸"),
     m(32, "group", "C", "2026-06-19", "21:00", "BRA", "HAI", "Lincoln Financial Field, Filadelfia 🇺🇸"),
 
@@ -209,6 +208,7 @@ function generateGroupMatches() {
     m(70, "group", "K", "2026-06-27", "19:30", "COL", "POR", "Hard Rock Stadium, Miami 🇺🇸"),
     m(71, "group", "K", "2026-06-27", "19:30", "COD", "UZB", "Mercedes-Benz Stadium, Atlanta 🇺🇸"),
     m(72, "group", "J", "2026-06-27", "22:00", "ALG", "AUT", "BMO Field, Toronto 🇨🇦"),
+    m(30, "group", "J", "2026-06-27", "22:00", "JOR", "ARG", "AT&T Stadium, Dallas 🇺🇸"),
   ];
 }
 
