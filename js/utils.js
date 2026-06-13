@@ -257,3 +257,19 @@ export function calculateTournamentStats(matches, teams) {
   };
 }
 
+// Formatea fecha del encabezado del calendario completo de forma inmune a la zona horaria del cliente
+export function formatHeaderDate(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const dateObj = new Date(Date.UTC(year, month - 1, day));
+  
+  const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+  const dayName = days[dateObj.getUTCDay()];
+  const monthName = months[dateObj.getUTCMonth()];
+  const dayNum = dateObj.getUTCDate();
+
+  return `${dayName}, ${dayNum} de ${monthName}`;
+}
+
+

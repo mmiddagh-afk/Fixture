@@ -1,5 +1,5 @@
 import { TEAMS, INITIAL_MATCHES, TRIVIA_FACTS } from './data.js';
-import { formatBoliviaTime, getCountdown, calculateGroupStandings, convertToAmPm, getDetailedCountdown, calculateTournamentStats } from './utils.js';
+import { formatBoliviaTime, getCountdown, calculateGroupStandings, convertToAmPm, getDetailedCountdown, calculateTournamentStats, formatHeaderDate } from './utils.js';
 
 // ==========================================================================
 // ESTADO GLOBAL DE LA APP (PERSISTIDO EN LOCALSTORAGE)
@@ -15,11 +15,39 @@ const state = {
   isLoading: false
 };
 
-// Cargar o inicializar partidos
+// Cargar o inicializar partidos con merge inteligente para mantener simulaciones pero actualizar datos oficiales
 function initMatches() {
   const saved = localStorage.getItem('fixture_2026_matches');
   if (saved) {
-    state.matches = JSON.parse(saved);
+    const savedMatches = JSON.parse(saved);
+    state.matches = INITIAL_MATCHES.map(officialMatch => {
+      const savedMatch = savedMatches.find(m => m.id === officialMatch.id);
+      if (savedMatch) {
+        const updatedMatch = { ...savedMatch };
+        
+        // Sincronizar datos oficiales que puedan cambiar (fecha, hora, estadio)
+        updatedMatch.date = officialMatch.date;
+        updatedMatch.time = officialMatch.time;
+        updatedMatch.venue = officialMatch.venue;
+        
+        if (officialMatch.stage === 'group') {
+          updatedMatch.home = officialMatch.home;
+          updatedMatch.away = officialMatch.away;
+          updatedMatch.group = officialMatch.group;
+        }
+
+        // Si el partido ya finalizó oficialmente, forzamos el resultado oficial
+        if (officialMatch.status === 'finished') {
+          updatedMatch.status = 'finished';
+          updatedMatch.homeScore = officialMatch.homeScore;
+          updatedMatch.awayScore = officialMatch.awayScore;
+        }
+        
+        return updatedMatch;
+      }
+      return officialMatch;
+    });
+    saveState();
   } else {
     state.matches = [...INITIAL_MATCHES];
     saveState();
@@ -720,8 +748,9 @@ function renderFavoriteBanner() {
 // ==========================================================================
 function initPullToRefresh() {
   const appContainer = document.querySelector('.app-container');
+  const appMain = document.querySelector('.app-main');
   const ptr = document.getElementById('ptr-element');
-  if (!appContainer || !ptr) return;
+  if (!appContainer || !appMain || !ptr) return;
 
   let startY = 0;
   let currentY = 0;
@@ -729,10 +758,9 @@ function initPullToRefresh() {
   const threshold = 70;
   const maxPull = 100;
 
-  appContainer.addEventListener('touchstart', (e) => {
-    const appMain = document.querySelector('.app-main');
+  appMain.addEventListener('touchstart', (e) => {
     // Solo permitir pull-to-refresh si el contenedor de scroll interno está al inicio
-    if (appMain && appMain.scrollTop === 0) {
+    if (appMain.scrollTop === 0) {
       startY = e.touches[0].pageY;
       isPulling = true;
       ptr.classList.remove('ptr-loading');
@@ -742,21 +770,19 @@ function initPullToRefresh() {
     }
   });
 
-  appContainer.addEventListener('touchmove', (e) => {
+  appMain.addEventListener('touchmove', (e) => {
     if (!isPulling) return;
     currentY = e.touches[0].pageY;
     const diff = currentY - startY;
 
-    // Si el usuario desliza hacia arriba (quiere hacer scroll hacia abajo en la página),
-    // cancelamos el pull inmediatamente para liberar el scroll nativo.
+    // Si el usuario desliza hacia arriba, cancelamos el pull inmediatamente
     if (diff < 0) {
       isPulling = false;
       return;
     }
 
     if (diff > 0) {
-      const appMain = document.querySelector('.app-main');
-      if (appMain && appMain.scrollTop > 0) {
+      if (appMain.scrollTop > 0) {
         isPulling = false;
         return;
       }
@@ -777,9 +803,9 @@ function initPullToRefresh() {
         ptr.querySelector('.ptr-text').style.color = '';
       }
     }
-  });
+  }, { passive: false });
 
-  appContainer.addEventListener('touchend', () => {
+  appMain.addEventListener('touchend', () => {
     if (!isPulling) return;
     isPulling = false;
     const diff = currentY - startY;
@@ -848,10 +874,7 @@ function renderHoy() {
 
     let html = '';
     Object.keys(groups).forEach(dateStr => {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const dateObj = new Date(Date.UTC(y, m - 1, d));
-      const options = { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' };
-      const friendlyDate = dateObj.toLocaleDateString('es-BO', options);
+      const friendlyDate = formatHeaderDate(dateStr);
       
       html += `
         <div class="date-group-header">
@@ -877,10 +900,7 @@ function renderHoy() {
       todayMatches = state.matches.filter(m => m.date === targetDate);
       dateLabel.innerHTML = `Próxima fecha: 11 de Junio 📅`;
     } else {
-      const [y, m, d] = targetDate.split('-').map(Number);
-      const dateObj = new Date(Date.UTC(y, m - 1, d));
-      const options = { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' };
-      dateLabel.innerText = dateObj.toLocaleDateString('es-BO', options);
+      dateLabel.innerText = formatHeaderDate(targetDate);
     }
 
     if (todayMatches.length === 0) {
@@ -1513,37 +1533,65 @@ function initPreloader() {
 // ==========================================================================
 // PROMPT DE INSTALACIÓN iOS SAFARI (EXTRA PREMIUM)
 // ==========================================================================
+function openIosInstallModal() {
+  const modal = document.getElementById('ios-install-modal');
+  const overlay = document.getElementById('ios-modal-overlay');
+  if (modal && overlay) {
+    modal.classList.add('active');
+    overlay.classList.add('active');
+  }
+}
+
+function closeIosInstallModal() {
+  const modal = document.getElementById('ios-install-modal');
+  const overlay = document.getElementById('ios-modal-overlay');
+  if (modal && overlay) {
+    modal.classList.remove('active');
+    overlay.classList.remove('active');
+  }
+}
+
 function initIosInstallPrompt() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
 
-  if (isIOS && !isStandalone && !sessionStorage.getItem('ios_prompt_dismissed')) {
-    const tooltip = document.createElement('div');
-    tooltip.className = 'ios-install-tooltip';
-    tooltip.id = 'ios-install-tooltip';
-    tooltip.innerHTML = `
-      <div class="ios-tooltip-header">
-        <span>📲 Instalar en tu iPhone</span>
-        <button class="btn-close-tooltip" id="close-ios-tooltip">✕</button>
-      </div>
-      <p class="ios-tooltip-body">
-        Tocá el botón de <strong>Compartir</strong> <span class="ios-share-icon">⎋</span> abajo en la barra de Safari y elegí <strong>"Agregar a Inicio"</strong> <span class="ios-add-icon">⊞</span> para seguir el Mundial.
-      </p>
-      <div class="ios-tooltip-arrow"></div>
-    `;
-    
-    document.body.appendChild(tooltip);
+  if (isIOS && !isStandalone) {
+    // Mostrar el botón de instalar para iOS
+    const installBtn = document.getElementById('pwa-install-btn');
+    if (installBtn) {
+      installBtn.style.display = 'flex';
+    }
 
-    // Esperar a que se vaya el preloader para mostrarlo
-    setTimeout(() => {
-      tooltip.classList.add('show');
-    }, 4000);
+    // Además, mostrar la burbuja de ayuda automática si no ha sido cerrada
+    if (!sessionStorage.getItem('ios_prompt_dismissed')) {
+      const tooltip = document.createElement('div');
+      tooltip.className = 'ios-install-tooltip';
+      tooltip.id = 'ios-install-tooltip';
+      tooltip.innerHTML = `
+        <div class="ios-tooltip-header">
+          <span>📲 Instalar en tu iPhone</span>
+          <button class="btn-close-tooltip" id="close-ios-tooltip">✕</button>
+        </div>
+        <p class="ios-tooltip-body">
+          Tocá el botón de <strong>Compartir</strong> <span class="ios-share-icon">⎋</span> abajo en la barra de Safari y elegí <strong>"Agregar a Inicio"</strong> <span class="ios-add-icon">⊞</span> para seguir el Mundial.
+        </p>
+        <div class="ios-tooltip-arrow"></div>
+      `;
+      
+      document.body.appendChild(tooltip);
 
-    document.getElementById('close-ios-tooltip').addEventListener('click', () => {
-      tooltip.classList.remove('show');
-      sessionStorage.setItem('ios_prompt_dismissed', 'true');
-      setTimeout(() => { tooltip.remove(); }, 400);
-    });
+      // Esperar a que se vaya el preloader para mostrarlo
+      setTimeout(() => {
+        tooltip.classList.add('show');
+      }, 4000);
+
+      document.getElementById('close-ios-tooltip').addEventListener('click', (e) => {
+        e.stopPropagation();
+        tooltip.classList.remove('show');
+        sessionStorage.setItem('ios_prompt_dismissed', 'true');
+        setTimeout(() => { tooltip.remove(); }, 400);
+      });
+    }
   }
 }
 
@@ -1561,6 +1609,12 @@ window.addEventListener('DOMContentLoaded', () => {
   initPullToRefresh();
   initTabRouter();
   renderActiveTab();
+
+  // Registrar eventos para el modal de instalación de iOS
+  const iosCloseBtn = document.getElementById('ios-modal-close');
+  const iosOverlay = document.getElementById('ios-modal-overlay');
+  if (iosCloseBtn) iosCloseBtn.addEventListener('click', closeIosInstallModal);
+  if (iosOverlay) iosOverlay.addEventListener('click', closeIosInstallModal);
 });
 
 // PWA Install Event Handler
@@ -1577,6 +1631,13 @@ window.addEventListener('beforeinstallprompt', (e) => {
 const installBtn = document.getElementById('pwa-install-btn');
 if (installBtn) {
   installBtn.addEventListener('click', async () => {
+    // Si estamos en iOS, abrimos las instrucciones de Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      openIosInstallModal();
+      return;
+    }
+
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;

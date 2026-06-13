@@ -278,6 +278,34 @@
   </div>
   <div class="modal-overlay" id="fav-modal-overlay"></div>
 
+  <!-- Modal para instrucciones de instalación en iOS Safari -->
+  <div class="fav-selector-modal" id="ios-install-modal">
+    <div class="modal-content" style="max-width: 340px;">
+      <div class="modal-header">
+        <h3>📲 Instalar en Safari</h3>
+        <button class="modal-close-btn" id="ios-modal-close">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <p class="modal-subtitle" style="margin-bottom: 20px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4;">Sigue estos sencillos pasos para agregar la app a tu pantalla de inicio en tu iPhone o iPad:</p>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <span style="background: var(--accent-gold); color: black; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.85rem;">1</span>
+            <span style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.4;">Toca el botón <strong>Compartir</strong> <span class="ios-share-icon" style="background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 6px; font-weight: bold;">⎋</span> en la barra de Safari.</span>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <span style="background: var(--accent-gold); color: black; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.85rem;">2</span>
+            <span style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.4;">Desliza hacia abajo y selecciona <strong>"Agregar a Inicio"</strong> <span class="ios-add-icon" style="background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 6px; font-weight: bold;">⊞</span>.</span>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <span style="background: var(--accent-gold); color: black; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.85rem;">3</span>
+            <span style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.4;">Presiona <strong>"Agregar"</strong> en la parte superior derecha.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="ios-modal-overlay"></div>
+
   <!-- Application Logic -->
   <script type="module" src="js/app.js"></script>
 </body>

@@ -42,11 +42,12 @@
   padding: 0;
 }
 
-body {
+html, body {
   font-family: 'Inter', sans-serif;
   background-color: var(--bg-dark-1);
   color: var(--text-primary);
-  min-height: 100vh;
+  height: 100%;
+  overscroll-behavior: none;
   overflow-x: hidden;
   position: relative;
   -webkit-font-smoothing: antialiased;
@@ -80,12 +81,14 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   max-width: 480px;
   margin: 0 auto;
   padding: 0;
   position: relative;
   overflow: hidden;
   background-color: var(--bg-dark-1);
+  overscroll-behavior: none;
 }
 
 /* ==========================================================================
@@ -226,6 +229,7 @@ body {
   position: relative;
   -webkit-overflow-scrolling: touch;
   order: 2;
+  overscroll-behavior-y: contain;
 }
 
 .view-section {
