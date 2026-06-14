@@ -57,7 +57,6 @@
           <button class="btn-install" id="pwa-install-btn" style="display: none;">📲 Instalar</button>
           <button class="btn-alerts-toggle" id="btn-alerts-toggle" title="Activar Alertas (15 min antes)">🔔 Alertas</button>
           <button class="btn-fav-toggle" id="btn-fav-toggle" title="Selección Favorita">⭐ Favorito</button>
-          <button class="btn-prode-toggle" id="btn-prode-toggle" title="Activar/Desactivar Modo Prode">🏆 Prode</button>
           <button class="btn-sync-live" id="btn-sync-live" title="Sincronizar Resultados en Vivo">
             <span class="sync-icon">🔴</span>
             <span class="sync-text">Sincronizar</span>
@@ -187,83 +186,13 @@
 
   </div>
 
-  <!-- Floating Simulator Button -->
-  <button class="btn-simulator-trigger" id="sim-trigger" title="Cargar Resultados Reales/Oficiales">
+  <!-- Floating Prode Toggle Button -->
+  <button class="btn-simulator-trigger" id="btn-prode-toggle" title="Activar/Desactivar Modo Prode">
     <span class="pulse-ring"></span>
     <span class="sim-icon">🏆</span>
-    <span class="sim-text">Resultados</span>
+    <span class="sim-text">Prode</span>
   </button>
 
-  <!-- Simulator Drawer Panel -->
-  <div class="simulator-drawer" id="sim-drawer">
-    <div class="drawer-header">
-      <h3>🏆 Resultados Reales (Oficiales)</h3>
-      <button class="btn-close-drawer" id="sim-close">✕</button>
-    </div>
-    <div class="drawer-body">
-      <p class="sim-info-txt">Cargá los resultados oficiales o simulados de los partidos para actualizar las tablas de posiciones y las llaves en tiempo real.</p>
-      
-      <div class="sim-form-group">
-        <label for="sim-match-select">Seleccionar Partido:</label>
-        <select id="sim-match-select" class="sim-select">
-          <!-- Populated dynamically -->
-        </select>
-      </div>
-
-      <div class="sim-score-controller">
-        
-        <div class="sim-team-block home-block">
-          <span class="sim-flag" id="sim-home-flag">🏁</span>
-          <span class="sim-team-name" id="sim-home-name">Local</span>
-          <div class="score-buttons">
-            <button class="btn-score-adjust" data-team="home" data-action="dec">-</button>
-            <span class="sim-score" id="sim-home-score">0</span>
-            <button class="btn-score-adjust" data-team="home" data-action="inc">+</button>
-          </div>
-        </div>
-
-        <div class="sim-vs-divider">VS</div>
-
-        <div class="sim-team-block away-block">
-          <span class="sim-flag" id="sim-away-flag">🏁</span>
-          <span class="sim-team-name" id="sim-away-name">Visitante</span>
-          <div class="score-buttons">
-            <button class="btn-score-adjust" data-team="away" data-action="dec">-</button>
-            <span class="sim-score" id="sim-away-score">0</span>
-            <button class="btn-score-adjust" data-team="away" data-action="inc">+</button>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="sim-state-controls">
-        
-        <div class="sim-form-group-inline">
-          <label for="sim-status-select">Estado:</label>
-          <select id="sim-status-select" class="sim-select">
-            <option value="upcoming">Próximo</option>
-            <option value="live">En Vivo</option>
-            <option value="finished">Finalizado</option>
-          </select>
-        </div>
-
-        <div class="sim-form-group-inline" id="sim-minute-wrapper" style="display: none;">
-          <label for="sim-minute-input">Minuto:</label>
-          <div class="minute-adjuster">
-            <button class="btn-min-adjust" id="sim-min-dec">-</button>
-            <span id="sim-minute-val">45'</span>
-            <button class="btn-min-adjust" id="sim-min-inc">+</button>
-          </div>
-        </div>
-
-      </div>
-
-      <button class="btn-reset-simulator" id="sim-reset">Restablecer Todo el Mundial</button>
-
-    </div>
-  </div>
-  
-  <div class="drawer-overlay" id="sim-overlay"></div>
 
   <!-- Modal para seleccionar selección favorita (Punto 8) -->
   <div class="fav-selector-modal" id="fav-selector-modal">

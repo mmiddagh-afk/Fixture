@@ -711,9 +711,9 @@ html, body {
   position: absolute;
   bottom: 80px;
   right: 16px;
-  background: linear-gradient(135deg, var(--accent-gold), hsl(var(--hue-accent), 90%, 40%));
-  color: var(--bg-dark-1);
-  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
   outline: none;
   border-radius: 50px;
   padding: 12px 24px;
@@ -723,7 +723,6 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 8px 24px rgba(245, 197, 24, 0.3);
   cursor: pointer;
   z-index: 100;
   transition: var(--transition-smooth);
@@ -731,6 +730,18 @@ html, body {
 
 .btn-simulator-trigger:hover {
   transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-simulator-trigger.active {
+  background: linear-gradient(135deg, var(--accent-gold), hsl(var(--hue-accent), 90%, 40%));
+  color: var(--bg-dark-1);
+  border: none;
+  box-shadow: 0 8px 24px rgba(245, 197, 24, 0.3);
+}
+
+.btn-simulator-trigger.active:hover {
   box-shadow: 0 12px 32px rgba(245, 197, 24, 0.5);
 }
 
@@ -743,6 +754,12 @@ html, body {
   border-radius: 50px;
   border: 2px solid var(--accent-gold);
   animation: buttonPulse 1.8s infinite;
+  display: none;
+}
+
+.btn-simulator-trigger.active .pulse-ring {
+  display: block;
+}
   pointer-events: none;
 }
 
