@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fixture-2026-v4';
+const CACHE_NAME = 'fixture-2026-v8';
 const ASSETS = [
   './',
   './index.html',

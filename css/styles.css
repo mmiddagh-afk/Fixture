@@ -2420,6 +2420,244 @@ html, body {
   }
 }
 
+/* ==========================================================================
+   ADMIN PANEL STYLES
+   ========================================================================== */
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.05) 100%);
+  color: var(--accent-gold);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 6px;
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+  user-select: none;
+}
+
+.admin-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+  border-color: var(--accent-gold);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.1) 100%);
+}
+
+.admin-date-group {
+  margin-bottom: 20px;
+}
+
+.admin-date-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-left: 2.5px solid var(--accent-gold);
+  padding-left: 8px;
+}
+
+.admin-match-row {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all var(--transition-smooth);
+}
+
+.admin-match-row:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-score-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-team-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.admin-team-info .team-flag {
+  width: 24px;
+  height: 16px;
+  object-fit: cover;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.admin-team-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.admin-score-adjuster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-score-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+  user-select: none;
+}
+
+.admin-score-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--accent-gold);
+}
+
+.admin-score-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.admin-score-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 16px;
+  text-align: center;
+}
+
+.admin-status-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+  padding-top: 10px;
+  margin-top: 2px;
+}
+
+.admin-status-badge {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition-smooth);
+  border: 1px solid transparent;
+}
+
+.admin-status-badge.upcoming {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  border-color: var(--glass-border);
+}
+
+.admin-status-badge.live {
+  background: rgba(255, 23, 68, 0.1);
+  color: #ff1744;
+  border-color: rgba(255, 23, 68, 0.3);
+  animation: admin-pulse-live 2s infinite;
+}
+
+.admin-status-badge.finished {
+  background: rgba(0, 230, 118, 0.1);
+  color: var(--accent-green);
+  border-color: rgba(0, 230, 118, 0.3);
+}
+
+@keyframes admin-pulse-live {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; box-shadow: 0 0 6px rgba(255, 23, 68, 0.3); }
+  100% { opacity: 0.8; }
+}
+
+.admin-live-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-minute-input {
+  width: 44px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  text-align: center;
+  outline: none;
+  transition: var(--transition-smooth);
+}
+
+.admin-minute-input:focus {
+  border-color: rgba(212, 175, 55, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-reset-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.68rem;
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+}
+
+.admin-reset-btn:hover {
+  border-color: rgba(255, 82, 82, 0.3);
+  color: #ff5252;
+  background: rgba(255, 82, 82, 0.05);
+}
+
+.admin-locked-badge {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  border: 1px solid var(--glass-border);
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
 @media (min-width: 1024px) {
 
   /* --- BODY & BACKGROUND --- */

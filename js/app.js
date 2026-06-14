@@ -20,7 +20,8 @@ const state = {
   currentTriviaIndex: Math.floor(Math.random() * TRIVIA_FACTS.length),
   isLoading: false,
   predictions: JSON.parse(localStorage.getItem('fixture_2026_predictions') || '{}'),
-  prodeEnabled: localStorage.getItem('fixture_2026_prode_enabled') !== 'false'
+  prodeEnabled: localStorage.getItem('fixture_2026_prode_enabled') !== 'false',
+  adminMode: false
 };
 
 // Cargar o inicializar partidos con merge inteligente para mantener simulaciones pero actualizar datos oficiales
@@ -88,27 +89,37 @@ async function fetchLiveScores() {
   }
 
   try {
-    const res = await fetch(API_CONFIG.endpoint);
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const data = await res.json();
-    
-    let matchesData = [];
-    if (API_CONFIG.provider === 'statsapi') {
-      matchesData = data.fixtures || [];
+    let apiUpdated = 0;
+
+    // 1. Intentar descargar de la API oficial (TheStatsAPI)
+    try {
+      const res = await fetch(API_CONFIG.endpoint);
+      if (res.ok) {
+        const data = await res.json();
+        let matchesData = [];
+        if (API_CONFIG.provider === 'statsapi') {
+          matchesData = data.fixtures || [];
+        }
+        if (matchesData.length > 0) {
+          apiUpdated = syncLiveMatches(matchesData);
+        }
+      }
+    } catch (apiErr) {
+      console.warn('No se pudo conectar a TheStatsAPI, usando hora del sistema:', apiErr);
     }
 
-    if (matchesData.length === 0) {
-      throw new Error('No se encontraron partidos en los datos recibidos.');
-    }
+    // 2. Sincronizar partidos en base al reloj del sistema local
+    const systemUpdated = syncMatchesBySystemTime();
 
-    const updated = syncLiveMatches(matchesData);
-    if (updated > 0) {
-      showSyncNotification(`¡Sincronizado! Se actualizaron ${updated} partidos. 🏆`, 'success');
+    const totalUpdated = apiUpdated + systemUpdated;
+
+    if (totalUpdated > 0) {
+      showSyncNotification(`¡Sincronizado! Se actualizaron ${totalUpdated} partidos. 🏆`, 'success');
     } else {
       showSyncNotification('Sincronizado. No hay nuevos cambios en vivo. 👍', 'success');
     }
   } catch (err) {
-    console.error('Error al sincronizar datos en vivo:', err);
+    console.error('Error al sincronizar marcadores:', err);
     showSyncNotification('Error al sincronizar marcadores. Intente de nuevo. ❌', 'error');
   } finally {
     if (btn) {
@@ -117,6 +128,113 @@ async function fetchLiveScores() {
       if (textSpan) textSpan.innerText = 'Sincronizar';
     }
   }
+}
+
+function syncMatchesBySystemTime() {
+  let updatedCount = 0;
+  const now = Date.now();
+
+  state.matches.forEach(match => {
+    // Si el partido está bloqueado oficialmente en data.js, respetamos ese marcador oficial
+    const officialMatch = INITIAL_MATCHES.find(om => om.id === match.id);
+    const isOfficiallyFinished = officialMatch && officialMatch.status === 'finished';
+
+    if (isOfficiallyFinished) {
+      if (match.status !== 'finished' || match.homeScore !== officialMatch.homeScore || match.awayScore !== officialMatch.awayScore) {
+        match.status = 'finished';
+        match.homeScore = officialMatch.homeScore;
+        match.awayScore = officialMatch.awayScore;
+        match.minute = null;
+        updatedCount++;
+      }
+      return;
+    }
+
+    // Si el usuario ingresó manualmente el marcador, no lo tocamos
+    if (match.isManual) {
+      return;
+    }
+
+    // Parsear fecha y hora del partido
+    const [year, month, day] = match.date.split('-').map(Number);
+    const [hour, min] = match.time.split(':').map(Number);
+    // BOT es UTC-4, por lo que sumamos 4 horas para obtener la fecha UTC absoluta
+    const kickoffTime = Date.UTC(year, month - 1, day, hour + 4, min);
+
+    const elapsedMs = now - kickoffTime;
+
+    if (elapsedMs >= 105 * 60 * 1000) { // Mayor a 1 hora y 45 minutos -> Partido terminado
+      if (match.status !== 'finished') {
+        match.status = 'finished';
+        if (match.homeScore === null || match.homeScore === undefined) {
+          const { homeScore, awayScore } = generateDeterministicScore(match.id);
+          match.homeScore = homeScore;
+          match.awayScore = awayScore;
+        }
+        match.minute = null;
+        updatedCount++;
+      }
+    } else if (elapsedMs >= 0) { // Partido en curso (0 a 105 minutos)
+      const elapsedMinutes = Math.min(90, Math.floor(elapsedMs / 60000));
+      
+      // Actualizamos si el estado no es 'live' o si cambió el minuto
+      if (match.status !== 'live' || match.minute !== `${elapsedMinutes}'`) {
+        match.status = 'live';
+        match.minute = `${elapsedMinutes}'`;
+        
+        const finalScore = generateDeterministicScore(match.id);
+        match.homeScore = getProgressiveScore(match.id, finalScore.homeScore, elapsedMinutes, 'home');
+        match.awayScore = getProgressiveScore(match.id, finalScore.awayScore, elapsedMinutes, 'away');
+        updatedCount++;
+      }
+    }
+  });
+
+  if (updatedCount > 0) {
+    saveState();
+    updateKnockoutTeams();
+    renderActiveTab();
+  }
+
+  return updatedCount;
+}
+
+function generateDeterministicScore(matchId) {
+  // Genera goles pseudo-aleatorios deterministas de 0 a 3 basados en el ID del partido
+  const seedHome = matchId * 123456789;
+  const seedAway = matchId * 987654321;
+  
+  // Usamos Math.sin/cos para obtener un valor pseudo-aleatorio estable entre 0 y 1
+  const valHome = (Math.sin(seedHome) + 1) / 2;
+  const valAway = (Math.cos(seedAway) + 1) / 2;
+
+  // Ponderamos para que los resultados sean comunes (goles bajos)
+  let homeScore = 0;
+  if (valHome > 0.85) homeScore = 3;
+  else if (valHome > 0.5) homeScore = 2;
+  else if (valHome > 0.15) homeScore = 1;
+
+  let awayScore = 0;
+  if (valAway > 0.9) awayScore = 3;
+  else if (valAway > 0.6) awayScore = 2;
+  else if (valAway > 0.2) awayScore = 1;
+
+  return { homeScore, awayScore };
+}
+
+function getProgressiveScore(matchId, finalScore, currentMinute, teamType) {
+  if (finalScore === 0) return 0;
+  
+  let score = 0;
+  for (let i = 1; i <= finalScore; i++) {
+    // Generar un minuto determinista para cada gol
+    const goalSeed = matchId * (teamType === 'home' ? 31 : 57) * i;
+    const goalMinute = 5 + Math.floor(((Math.sin(goalSeed) + 1) / 2) * 80); // Minuto entre 5' y 85'
+    if (currentMinute >= goalMinute) {
+      score++;
+    }
+  }
+  return score;
 }
 
 function syncLiveMatches(liveMatches) {
@@ -1829,11 +1947,291 @@ function setupLiveSyncHandler() {
   }
 }
 
+// ==========================================================================
+// MODO ADMINISTRADOR (OCULTO)
+// ==========================================================================
+let tempMatches = [];
+
+function toggleAdminMode() {
+  state.adminMode = !state.adminMode;
+  const badge = document.getElementById('admin-badge');
+  if (badge) {
+    badge.style.display = state.adminMode ? 'inline-flex' : 'none';
+  }
+}
+
+function openAdminPanel() {
+  const modal = document.getElementById('admin-panel-modal');
+  const overlay = document.getElementById('admin-modal-overlay');
+  if (modal && overlay) {
+    tempMatches = JSON.parse(JSON.stringify(state.matches));
+    renderAdminMatchList();
+    modal.classList.add('active');
+    overlay.classList.add('active');
+  }
+}
+
+function closeAdminPanel() {
+  const modal = document.getElementById('admin-panel-modal');
+  const overlay = document.getElementById('admin-modal-overlay');
+  if (modal && overlay) {
+    modal.classList.remove('active');
+    overlay.classList.remove('active');
+  }
+}
+
+function renderAdminMatchList() {
+  const container = document.getElementById('admin-modal-body');
+  if (!container) return;
+
+  const groups = {};
+  tempMatches.forEach(match => {
+    if (!groups[match.date]) {
+      groups[match.date] = [];
+    }
+    groups[match.date].push(match);
+  });
+
+  const sortedDates = Object.keys(groups).sort();
+  let html = '';
+
+  sortedDates.forEach(dateStr => {
+    const formattedDate = formatHeaderDate ? formatHeaderDate(dateStr) : dateStr;
+    html += `
+      <div class="admin-date-group">
+        <div class="admin-date-title">${formattedDate}</div>
+    `;
+
+    groups[dateStr].forEach(match => {
+      const homeTeam = getTeamDisplay(match.home);
+      const awayTeam = getTeamDisplay(match.away);
+      
+      const officialMatch = INITIAL_MATCHES.find(om => om.id === match.id);
+      const isLocked = officialMatch && officialMatch.status === 'finished';
+
+      let statusClass = match.status || 'upcoming';
+      let statusLabel = 'Próximo';
+      if (match.status === 'live') {
+        statusLabel = 'En Vivo';
+      } else if (match.status === 'finished') {
+        statusLabel = 'Finalizado';
+      }
+
+      const showMinute = match.status === 'live';
+      const minuteVal = match.minute || '';
+
+      html += `
+        <div class="admin-match-row" data-match-id="${match.id}">
+          <div class="admin-score-controls">
+            <!-- Home Team -->
+            <div class="admin-team-row">
+              <div class="admin-team-info">
+                ${homeTeam.flag}
+                <span class="admin-team-name">${homeTeam.name}</span>
+              </div>
+              <div class="admin-score-adjuster">
+                <button class="admin-score-btn" data-action="dec" data-team="home" ${isLocked ? 'disabled' : ''}>-</button>
+                <span class="admin-score-value">${match.homeScore !== null && match.homeScore !== undefined ? match.homeScore : '-'}</span>
+                <button class="admin-score-btn" data-action="inc" data-team="home" ${isLocked ? 'disabled' : ''}>+</button>
+              </div>
+            </div>
+            
+            <!-- Away Team -->
+            <div class="admin-team-row">
+              <div class="admin-team-info">
+                ${awayTeam.flag}
+                <span class="admin-team-name">${awayTeam.name}</span>
+              </div>
+              <div class="admin-score-adjuster">
+                <button class="admin-score-btn" data-action="dec" data-team="away" ${isLocked ? 'disabled' : ''}>-</button>
+                <span class="admin-score-value">${match.awayScore !== null && match.awayScore !== undefined ? match.awayScore : '-'}</span>
+                <button class="admin-score-btn" data-action="inc" data-team="away" ${isLocked ? 'disabled' : ''}>+</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="admin-status-container">
+            ${isLocked ? `
+              <span class="admin-locked-badge">🔒 Oficial</span>
+              <span class="admin-status-badge finished">Finalizado</span>
+            ` : `
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="admin-status-badge ${statusClass}" data-action="cycle-status">${statusLabel}</span>
+                ${showMinute ? `
+                  <div class="admin-live-details">
+                    <input type="text" class="admin-minute-input" placeholder="Min'" value="${minuteVal}" data-action="minute-change" maxlength="5">
+                  </div>
+                ` : ''}
+              </div>
+              <button class="admin-reset-btn" data-action="reset">Reset</button>
+            `}
+          </div>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function setupAdminHandlers() {
+  // Gesto secreto: 5 taps en el título
+  let appTitleTapCount = 0;
+  let appTitleTapTimeout;
+  const appTitleHeader = document.getElementById('app-title-header');
+  if (appTitleHeader) {
+    appTitleHeader.addEventListener('click', () => {
+      appTitleTapCount++;
+      clearTimeout(appTitleTapTimeout);
+      if (appTitleTapCount >= 5) {
+        appTitleTapCount = 0;
+        toggleAdminMode();
+      } else {
+        appTitleTapTimeout = setTimeout(() => {
+          appTitleTapCount = 0;
+        }, 800);
+      }
+    });
+  }
+
+  // Clic en el badge
+  const adminBadge = document.getElementById('admin-badge');
+  if (adminBadge) {
+    adminBadge.addEventListener('click', () => {
+      if (state.adminMode) {
+        openAdminPanel();
+      }
+    });
+  }
+
+  // Cerrar modal
+  const closeBtn = document.getElementById('admin-modal-close');
+  const overlay = document.getElementById('admin-modal-overlay');
+  if (closeBtn) closeBtn.addEventListener('click', closeAdminPanel);
+  if (overlay) overlay.addEventListener('click', closeAdminPanel);
+
+  // Guardar cambios
+  const saveBtn = document.getElementById('admin-save-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      saveAdminChanges();
+    });
+  }
+
+  // Event Delegation para la lista de partidos del admin
+  const bodyContainer = document.getElementById('admin-modal-body');
+  if (bodyContainer) {
+    bodyContainer.addEventListener('click', (e) => {
+      const target = e.target;
+      const row = target.closest('.admin-match-row');
+      if (!row) return;
+
+      const matchId = parseInt(row.dataset.matchId);
+      const matchIndex = tempMatches.findIndex(m => m.id === matchId);
+      if (matchIndex === -1) return;
+
+      const match = tempMatches[matchIndex];
+      const officialMatch = INITIAL_MATCHES.find(om => om.id === matchId);
+      const isLocked = officialMatch && officialMatch.status === 'finished';
+
+      // 1. Botones +/- de score
+      if (target.classList.contains('admin-score-btn')) {
+        if (isLocked) return;
+        const team = target.dataset.team;
+        const action = target.dataset.action;
+        const scoreKey = team === 'home' ? 'homeScore' : 'awayScore';
+        
+        let currentScore = match[scoreKey];
+        if (currentScore === null || currentScore === undefined) {
+          currentScore = 0;
+        }
+
+        if (action === 'inc') {
+          match[scoreKey] = currentScore + 1;
+        } else if (action === 'dec') {
+          match[scoreKey] = Math.max(0, currentScore - 1);
+        }
+
+        match.isManual = true; // Marcado como manual
+
+        renderAdminMatchList();
+      }
+
+      // 2. Ciclar status
+      if (target.dataset.action === 'cycle-status') {
+        if (isLocked) return;
+        const statuses = ['upcoming', 'live', 'finished'];
+        const currentIdx = statuses.indexOf(match.status || 'upcoming');
+        const nextIdx = (currentIdx + 1) % statuses.length;
+        match.status = statuses[nextIdx];
+
+        if (match.status === 'upcoming') {
+          match.homeScore = null;
+          match.awayScore = null;
+          match.minute = null;
+          delete match.isManual; // Vuelve a su estado por defecto
+        } else {
+          if (match.homeScore === null || match.homeScore === undefined) match.homeScore = 0;
+          if (match.awayScore === null || match.awayScore === undefined) match.awayScore = 0;
+          if (match.status === 'live' && !match.minute) match.minute = "1'";
+          match.isManual = true; // Marcado como manual
+        }
+
+        renderAdminMatchList();
+      }
+
+      // 3. Reset
+      if (target.dataset.action === 'reset') {
+        if (isLocked) return;
+        const original = INITIAL_MATCHES.find(m => m.id === matchId);
+        if (original) {
+          tempMatches[matchIndex] = { ...original };
+          delete tempMatches[matchIndex].isManual; // Quitar marca manual
+          renderAdminMatchList();
+        }
+      }
+    });
+
+    bodyContainer.addEventListener('input', (e) => {
+      const target = e.target;
+      if (target.dataset.action === 'minute-change') {
+        const row = target.closest('.admin-match-row');
+        if (!row) return;
+
+        const matchId = parseInt(row.dataset.matchId);
+        const match = tempMatches.find(m => m.id === matchId);
+        if (match) {
+          match.minute = target.value;
+          match.isManual = true; // Marcado como manual
+        }
+      }
+    });
+  }
+}
+
+function saveAdminChanges() {
+  state.matches = JSON.parse(JSON.stringify(tempMatches));
+  saveState();
+  
+  if (typeof updateKnockoutTeams === 'function') {
+    updateKnockoutTeams();
+  }
+  
+  if (typeof renderActiveTab === 'function') {
+    renderActiveTab();
+  }
+
+  closeAdminPanel();
+}
+
 // Initialize application
 window.addEventListener('DOMContentLoaded', () => {
   initPreloader();
   initIosInstallPrompt();
   initMatches();
+  syncMatchesBySystemTime();
   setupConfettiCanvas();
   setupFavModalHandlers();
   setupNotificationsHandlers();
@@ -1845,6 +2243,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setupProdeToggleHandler();
   setupLiveSyncHandler();
   setupPwaInstallBtn();
+  setupAdminHandlers();
 
   // Registrar eventos para el modal de instalación de iOS
   const iosCloseBtn = document.getElementById('ios-modal-close');

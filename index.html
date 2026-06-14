@@ -64,7 +64,10 @@
           </button>
         </div>
       </div>
-      <h1 class="app-title">MUNDIAL 2026</h1>
+      <h1 class="app-title" id="app-title-header" style="cursor: pointer; user-select: none;">MUNDIAL 2026</h1>
+      <div style="display: flex; justify-content: center; align-items: center;">
+        <span class="admin-badge" id="admin-badge" style="display:none;">🔑 ADMIN</span>
+      </div>
       <p class="app-subtitle">Fixture & Resultados en Tiempo Real</p>
     </header>
 
@@ -268,6 +271,23 @@
     </div>
   </div>
   <div class="modal-overlay" id="ios-modal-overlay"></div>
+
+  <!-- Modal para Administración Oculto -->
+  <div class="fav-selector-modal" id="admin-panel-modal">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3>🔑 Panel de Control Admin</h3>
+        <button class="modal-close-btn" id="admin-modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="admin-modal-body">
+        <!-- Partidos dinámicos -->
+      </div>
+      <div class="modal-footer" style="padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px;">
+        <button class="admin-save-btn" id="admin-save-btn" style="flex: 1; background: var(--accent-gold); color: black; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: var(--transition-smooth);">Guardar y Cerrar</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="admin-modal-overlay"></div>
 
   <!-- Application Logic -->
   <script type="module" src="js/app.js"></script>
