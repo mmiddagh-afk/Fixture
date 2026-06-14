@@ -4,6 +4,12 @@ import { formatBoliviaTime, getCountdown, calculateGroupStandings, convertToAmPm
 // ==========================================================================
 // ESTADO GLOBAL DE LA APP (PERSISTIDO EN LOCALSTORAGE)
 // ==========================================================================
+// Configuración de la API para sincronización de marcadores en vivo (Client-Side)
+const API_CONFIG = {
+  provider: 'statsapi', // 'statsapi'
+  endpoint: 'https://www.thestatsapi.com/world-cup/data/fixtures.json'
+};
+
 const state = {
   activeTab: 'hoy',
   matches: [],
@@ -68,6 +74,100 @@ function initMatches() {
 
 function saveState() {
   localStorage.setItem('fixture_2026_matches', JSON.stringify(state.matches));
+}
+
+// ==========================================================================
+// SINCRONIZACIÓN DE MARCADORES EN VIVO (CLIENT-SIDE)
+// ==========================================================================
+async function fetchLiveScores() {
+  const btn = document.getElementById('btn-sync-live');
+  if (btn) {
+    btn.classList.add('loading');
+    const textSpan = btn.querySelector('.sync-text');
+    if (textSpan) textSpan.innerText = 'Sincronizando...';
+  }
+
+  try {
+    const res = await fetch(API_CONFIG.endpoint);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    
+    let matchesData = [];
+    if (API_CONFIG.provider === 'statsapi') {
+      matchesData = data.fixtures || [];
+    }
+
+    if (matchesData.length === 0) {
+      throw new Error('No se encontraron partidos en los datos recibidos.');
+    }
+
+    const updated = syncLiveMatches(matchesData);
+    if (updated > 0) {
+      showSyncNotification(`¡Sincronizado! Se actualizaron ${updated} partidos. 🏆`, 'success');
+    } else {
+      showSyncNotification('Sincronizado. No hay nuevos cambios en vivo. 👍', 'success');
+    }
+  } catch (err) {
+    console.error('Error al sincronizar datos en vivo:', err);
+    showSyncNotification('Error al sincronizar marcadores. Intente de nuevo. ❌', 'error');
+  } finally {
+    if (btn) {
+      btn.classList.remove('loading');
+      const textSpan = btn.querySelector('.sync-text');
+      if (textSpan) textSpan.innerText = 'Sincronizar';
+    }
+  }
+}
+
+function syncLiveMatches(liveMatches) {
+  let updatedCount = 0;
+
+  state.matches.forEach(match => {
+    const liveMatch = liveMatches.find(lm => lm.id === match.id);
+    if (liveMatch) {
+      if (liveMatch.status === 'live' || liveMatch.status === 'finished') {
+        const hasScoreChanged = match.homeScore !== liveMatch.homeScore || match.awayScore !== liveMatch.awayScore;
+        const hasStatusChanged = match.status !== liveMatch.status;
+        const hasMinuteChanged = match.minute !== liveMatch.minute;
+
+        if (hasScoreChanged || hasStatusChanged || hasMinuteChanged) {
+          match.status = liveMatch.status;
+          match.homeScore = liveMatch.homeScore;
+          match.awayScore = liveMatch.awayScore;
+          match.minute = liveMatch.minute || (liveMatch.status === 'live' ? 1 : null);
+          updatedCount++;
+        }
+      }
+    }
+  });
+
+  if (updatedCount > 0) {
+    saveState();
+    updateKnockoutTeams();
+    renderActiveTab();
+  }
+  
+  return updatedCount;
+}
+
+function showSyncNotification(message, type = 'success') {
+  const oldToast = document.getElementById('sync-toast');
+  if (oldToast) oldToast.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'sync-toast';
+  toast.className = `sync-toast toast-${type}`;
+  toast.innerText = message;
+
+  document.body.appendChild(toast);
+
+  toast.offsetHeight; // force reflow
+  toast.classList.add('show');
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
 }
 
 // ==========================================================================
@@ -1839,6 +1939,20 @@ function setupProdeToggleHandler() {
   });
 }
 
+function setupLiveSyncHandler() {
+  const btn = document.getElementById('btn-sync-live');
+  if (!btn) return;
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    fetchLiveScores();
+  });
+
+  if (navigator.onLine) {
+    setTimeout(fetchLiveScores, 1500);
+  }
+}
+
 // Initialize application
 window.addEventListener('DOMContentLoaded', () => {
   initPreloader();
@@ -1855,6 +1969,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderActiveTab();
   setupProdeInputsListener();
   setupProdeToggleHandler();
+  setupLiveSyncHandler();
 
   // Registrar eventos para el modal de instalación de iOS
   const iosCloseBtn = document.getElementById('ios-modal-close');

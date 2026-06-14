@@ -1143,7 +1143,7 @@ html, body {
 /* ==========================================================================
    ALERTAS & FAVORITO BUTTONS (HEADER)
    ========================================================================== */
-.btn-alerts-toggle, .btn-fav-toggle, .btn-prode-toggle {
+.btn-alerts-toggle, .btn-fav-toggle, .btn-prode-toggle, .btn-sync-live {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
@@ -1159,9 +1159,39 @@ html, body {
   transition: var(--transition-smooth);
 }
 
-.btn-alerts-toggle:hover, .btn-fav-toggle:hover, .btn-prode-toggle:hover {
+.btn-alerts-toggle:hover, .btn-fav-toggle:hover, .btn-prode-toggle:hover, .btn-sync-live:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-sync-live .sync-icon {
+  display: inline-block;
+  animation: pulse-red 2s infinite;
+}
+
+.btn-sync-live.loading .sync-icon {
+  animation: spin-soccer 1s linear infinite;
+}
+
+@keyframes pulse-red {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes spin-soccer {
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-alerts-toggle.active {
@@ -2187,6 +2217,43 @@ html, body {
 
 .prediction-comp-text strong {
   color: var(--accent-gold);
+}
+
+/* Toast de Sincronización */
+.sync-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translate(-50%, 50px);
+  background: rgba(10, 14, 26, 0.95);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.sync-toast.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+.sync-toast.toast-success {
+  border-color: var(--accent-green-glow);
+  color: var(--accent-green);
+}
+
+.sync-toast.toast-error {
+  border-color: rgba(255, 23, 68, 0.4);
+  color: #ff1744;
 }
 
 
