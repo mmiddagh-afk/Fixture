@@ -104,12 +104,12 @@ function generateGroupMatches() {
     m(4,  "group", "D", "2026-06-12", "21:00", "USA", "PAR", "SoFi Stadium, Los Ángeles 🇺🇸", "finished", 4, 1),
 
     // === 13 de Junio ===
-    m(5,  "group", "B", "2026-06-13", "15:00", "QAT", "SUI", "San Francisco Stadium 🇺🇸"),
-    m(6,  "group", "C", "2026-06-13", "18:00", "BRA", "MAR", "MetLife Stadium, NY/NJ 🇺🇸"),
-    m(7,  "group", "C", "2026-06-13", "21:00", "HAI", "SCO", "Gillette Stadium, Boston 🇺🇸"),
+    m(5,  "group", "B", "2026-06-13", "15:00", "QAT", "SUI", "San Francisco Stadium 🇺🇸", "finished", 0, 2),
+    m(6,  "group", "C", "2026-06-13", "18:00", "BRA", "MAR", "MetLife Stadium, NY/NJ 🇺🇸", "finished", 3, 1),
+    m(7,  "group", "C", "2026-06-13", "21:00", "HAI", "SCO", "Gillette Stadium, Boston 🇺🇸", "finished", 1, 2),
 
     // === 14 de Junio ===
-    m(8,  "group", "D", "2026-06-14", "00:00", "AUS", "TUR", "BC Place, Vancouver 🇨🇦"),
+    m(8,  "group", "D", "2026-06-14", "00:00", "AUS", "TUR", "BC Place, Vancouver 🇨🇦", "finished", 2, 2),
     m(9,  "group", "E", "2026-06-14", "13:00", "GER", "CUW", "NRG Stadium, Houston 🇺🇸"),
     m(10, "group", "F", "2026-06-14", "16:00", "NED", "JPN", "AT&T Stadium, Dallas 🇺🇸"),
     m(11, "group", "F", "2026-06-14", "22:00", "SWE", "TUN", "Estadio BBVA, Monterrey 🇲🇽"),

@@ -123,7 +123,7 @@ function syncLiveMatches(liveMatches) {
   let updatedCount = 0;
 
   state.matches.forEach(match => {
-    const liveMatch = liveMatches.find(lm => lm.id === match.id);
+    const liveMatch = liveMatches.find(lm => (lm.id === match.id) || (lm.matchNumber === match.id));
     if (liveMatch) {
       if (liveMatch.status === 'live' || liveMatch.status === 'finished') {
         const hasScoreChanged = match.homeScore !== liveMatch.homeScore || match.awayScore !== liveMatch.awayScore;
