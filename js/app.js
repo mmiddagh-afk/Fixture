@@ -174,7 +174,7 @@ function showSyncNotification(message, type = 'success') {
 // PROGRESIÓN AUTOMÁTICA DE LLAVES (KNOCKOUTS)
 // ==========================================================================
 function updateKnockoutTeams() {
-  const standings = calculateGroupStandings(state.matches, state.teams);
+  const standings = calculateGroupStandings(state.matches, state.teams, state.predictions, state.prodeEnabled);
   
   // 1. Obtener clasificados de fase de grupos (1º y 2º de cada grupo A-L)
   const groupWinners = {}; // "A" -> teamCode
@@ -196,53 +196,96 @@ function updateKnockoutTeams() {
     return a.name.localeCompare(b.name);
   }).map(t => t.code);
 
+  // Helper para verificar si un grupo está completamente resuelto (jugado o predicho)
+  const isGroupResolved = (groupLetter) => {
+    const groupMatches = state.matches.filter(m => m.stage === 'group' && m.group === groupLetter);
+    return groupMatches.every(m => {
+      if (m.status === 'finished') return true;
+      if (state.prodeEnabled && state.predictions[m.id] !== undefined && state.predictions[m.id] !== null) return true;
+      return false;
+    });
+  };
+
   // 2. Poblar los Dieciseisavos de Final (ID 73 al 88)
-  // Mapeo estándar simplificado para el Mundial de 48
   const round32Pairings = [
-    { matchId: 73, home: groupWinners["A"], away: groupRunners["B"] },
-    { matchId: 74, home: groupWinners["C"], away: groupRunners["D"] },
-    { matchId: 75, home: groupWinners["E"], away: groupRunners["F"] },
-    { matchId: 76, home: groupWinners["G"], away: groupRunners["H"] },
-    { matchId: 77, home: groupWinners["I"], away: groupRunners["J"] },
-    { matchId: 78, home: groupWinners["K"], away: groupRunners["L"] },
+    { matchId: 73, gHome: "A", pHome: 1, gAway: "B", pAway: 2 },
+    { matchId: 74, gHome: "C", pHome: 1, gAway: "D", pAway: 2 },
+    { matchId: 75, gHome: "E", pHome: 1, gAway: "F", pAway: 2 },
+    { matchId: 76, gHome: "G", pHome: 1, gAway: "H", pAway: 2 },
+    { matchId: 77, gHome: "I", pHome: 1, gAway: "J", pAway: 2 },
+    { matchId: 78, gHome: "K", pHome: 1, gAway: "L", pAway: 2 },
     
-    { matchId: 79, home: groupWinners["B"], away: groupRunners["A"] },
-    { matchId: 80, home: groupWinners["D"], away: groupRunners["C"] },
-    { matchId: 81, home: groupWinners["F"], away: groupRunners["E"] },
-    { matchId: 82, home: groupWinners["H"], away: groupRunners["G"] },
-    { matchId: 83, home: groupWinners["J"], away: groupRunners["I"] },
-    { matchId: 84, home: groupWinners["L"], away: groupRunners["K"] },
+    { matchId: 79, gHome: "B", pHome: 1, gAway: "A", pAway: 2 },
+    { matchId: 80, gHome: "D", pHome: 1, gAway: "C", pAway: 2 },
+    { matchId: 81, gHome: "F", pHome: 1, gAway: "E", pAway: 2 },
+    { matchId: 82, gHome: "H", pHome: 1, gAway: "G", pAway: 2 },
+    { matchId: 83, gHome: "J", pHome: 1, gAway: "I", pAway: 2 },
+    { matchId: 84, gHome: "L", pHome: 1, gAway: "K", pAway: 2 },
     
     // Terceros puestos entran en los últimos 4 partidos
-    { matchId: 85, home: sortedThirds[0] || "3º Grupo A/B", away: sortedThirds[1] || "3º Grupo C/D" },
-    { matchId: 86, home: sortedThirds[2] || "3º Grupo E/F", away: sortedThirds[3] || "3º Grupo G/H" },
-    { matchId: 87, home: sortedThirds[4] || "3º Grupo I/J", away: sortedThirds[5] || "3º Grupo K/L" },
-    { matchId: 88, home: sortedThirds[6] || "3º Grupo A/C", away: sortedThirds[7] || "3º Grupo B/D" }
+    { matchId: 85, tHomeIdx: 0, tHomeLbl: "3º Gr. A/B", tAwayIdx: 1, tAwayLbl: "3º Gr. C/D" },
+    { matchId: 86, tHomeIdx: 2, tHomeLbl: "3º Gr. E/F", tAwayIdx: 3, tAwayLbl: "3º Gr. G/H" },
+    { matchId: 87, tHomeIdx: 4, tHomeLbl: "3º Gr. I/J", tAwayIdx: 5, tAwayLbl: "3º Gr. K/L" },
+    { matchId: 88, tHomeIdx: 6, tHomeLbl: "3º Gr. A/C", tAwayIdx: 7, tAwayLbl: "3º Gr. B/D" }
   ];
+
+  const allGroupsResolved = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"].every(isGroupResolved);
 
   round32Pairings.forEach(p => {
     const match = state.matches.find(m => m.id === p.matchId);
     if (match && match.status === "upcoming") {
-      match.home = p.home;
-      match.away = p.away;
-      match.isPlaceholder = false;
+      if (p.gHome) {
+        const homeResolved = isGroupResolved(p.gHome);
+        const awayResolved = isGroupResolved(p.gAway);
+        
+        match.home = homeResolved ? groupWinners[p.gHome] : `1º Gr. ${p.gHome}`;
+        match.away = awayResolved ? groupRunners[p.gAway] : `2º Gr. ${p.gAway}`;
+        match.isPlaceholder = !homeResolved || !awayResolved;
+      } else {
+        match.home = allGroupsResolved ? sortedThirds[p.tHomeIdx] : p.tHomeLbl;
+        match.away = allGroupsResolved ? sortedThirds[p.tAwayIdx] : p.tAwayLbl;
+        match.isPlaceholder = !allGroupsResolved;
+      }
     }
   });
 
-  // Helper para resolver ganador de una llave
+  // Helper para resolver ganador de una llave (soporta predicciones)
   const getWinner = (matchId) => {
     const m = state.matches.find(match => match.id === matchId);
-    if (!m || m.status !== "finished") return null;
-    if (m.homeScore > m.awayScore) return m.home;
-    if (m.awayScore > m.homeScore) return m.away;
-    // Si hay empate en eliminatoria, el home gana por defecto en simulación (penales)
-    return m.home;
+    if (!m) return null;
+    
+    if (m.status === "finished" || m.status === "live") {
+      if (m.homeScore > m.awayScore) return m.home;
+      if (m.awayScore > m.homeScore) return m.away;
+      return m.home;
+    }
+    
+    if (state.prodeEnabled) {
+      const pred = state.predictions[matchId];
+      if (pred !== undefined && pred !== null) {
+        if (pred.homeScore > pred.awayScore) return m.home;
+        if (pred.awayScore > pred.homeScore) return m.away;
+        return m.home; // Empate en predicciones avanza el local por defecto
+      }
+    }
+    return null;
   };
 
   const getLoser = (matchId) => {
     const m = state.matches.find(match => match.id === matchId);
-    if (!m || m.status !== "finished") return null;
-    return m.homeScore > m.awayScore ? m.away : m.home;
+    if (!m) return null;
+    
+    if (m.status === "finished" || m.status === "live") {
+      return m.homeScore > m.awayScore ? m.away : m.home;
+    }
+    
+    if (state.prodeEnabled) {
+      const pred = state.predictions[matchId];
+      if (pred !== undefined && pred !== null) {
+        return pred.homeScore > pred.awayScore ? m.away : m.home;
+      }
+    }
+    return null;
   };
 
   // 3. Progresión consecutiva del bracket
@@ -879,7 +922,7 @@ function renderFavoriteBanner() {
   const team = state.teams[teamCode];
   if (!team) return;
 
-  const standings = calculateGroupStandings(state.matches, state.teams);
+  const standings = calculateGroupStandings(state.matches, state.teams, state.predictions, state.prodeEnabled);
   const groupName = team.group;
   const groupStandings = standings[groupName] || [];
   const teamStat = groupStandings.find(t => t.code === teamCode) || { pj: 0, g: 0, e: 0, p: 0, pts: 0 };
@@ -1170,7 +1213,9 @@ function renderHoy() {
     titleLabel.innerText = "Partidos de Hoy";
     toggleBtn.innerText = "📅 Ver Calendario Completo";
 
-    const todayISO = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const botDate = new Date(now.getTime() - (4 * 60 * 60 * 1000));
+    const todayISO = botDate.toISOString().split('T')[0];
     let targetDate = todayISO;
     
     let todayMatches = state.matches.filter(m => m.date === targetDate);
@@ -1249,7 +1294,7 @@ function renderTablas() {
   renderTournamentStats();
 
   const container = document.getElementById('tables-container');
-  const standings = calculateGroupStandings(state.matches, state.teams);
+  const standings = calculateGroupStandings(state.matches, state.teams, state.predictions, state.prodeEnabled);
   
   let html = '';
 
@@ -1345,10 +1390,34 @@ function renderEliminatorias() {
               if (m.homeScore > m.awayScore) homeClass += ' winner', awayClass += ' loser';
               else if (m.awayScore > m.homeScore) awayClass += ' winner', homeClass += ' loser';
               else homeClass += ' winner'; // Por penales
+            } else if (state.prodeEnabled) {
+              const pred = state.predictions[m.id];
+              if (pred !== undefined && pred !== null) {
+                if (pred.homeScore > pred.awayScore) homeClass += ' winner', awayClass += ' loser';
+                else if (pred.awayScore > pred.homeScore) awayClass += ' winner', homeClass += ' loser';
+                else homeClass += ' winner'; // Por defecto empate
+              }
             }
 
-            const scoreHome = m.status !== 'upcoming' ? m.homeScore : '';
-            const scoreAway = m.status !== 'upcoming' ? m.awayScore : '';
+            let scoreHomeHTML = '';
+            let scoreAwayHTML = '';
+
+            if (m.status !== 'upcoming') {
+              scoreHomeHTML = `<span class="node-score">${m.homeScore}</span>`;
+              scoreAwayHTML = `<span class="node-score">${m.awayScore}</span>`;
+            } else if (state.prodeEnabled) {
+              const pred = state.predictions[m.id];
+              if (pred !== undefined && pred !== null) {
+                scoreHomeHTML = `<span class="node-score prediction-score" style="color: var(--accent-gold); font-style: italic; opacity: 0.85;">${pred.homeScore}</span>`;
+                scoreAwayHTML = `<span class="node-score prediction-score" style="color: var(--accent-gold); font-style: italic; opacity: 0.85;">${pred.awayScore}</span>`;
+              } else {
+                scoreHomeHTML = `<span class="node-score"></span>`;
+                scoreAwayHTML = `<span class="node-score"></span>`;
+              }
+            } else {
+              scoreHomeHTML = `<span class="node-score"></span>`;
+              scoreAwayHTML = `<span class="node-score"></span>`;
+            }
 
             const isLiveLabel = m.status === 'live' ? `<span style="color:var(--accent-green); font-weight:bold;">LIVE ${m.minute}'</span>` : (m.label || `Partido ${m.id}`);
 
@@ -1362,14 +1431,14 @@ function renderEliminatorias() {
                     <span>${home.flag}</span>
                     <span class="node-team-name">${home.name}</span>
                   </div>
-                  <span class="node-score">${scoreHome}</span>
+                  ${scoreHomeHTML}
                 </div>
                 <div class="${awayClass}">
                   <div class="node-flag-name">
                     <span>${away.flag}</span>
                     <span class="node-team-name">${away.name}</span>
                   </div>
-                  <span class="node-score">${scoreAway}</span>
+                  ${scoreAwayHTML}
                 </div>
               </div>
             `;
@@ -1707,18 +1776,18 @@ function setupProdeInputsListener() {
 
     if (action === 'inc') {
       pred[scoreKey]++;
+      if (window.triggerConfetti) {
+        window.triggerConfetti(e.clientX, e.clientY);
+      }
     } else {
       pred[scoreKey] = Math.max(0, pred[scoreKey] - 1);
     }
 
     localStorage.setItem('fixture_2026_predictions', JSON.stringify(state.predictions));
-
-    const scoreSpan = document.getElementById(`pred-${team}-${matchId}`);
-    if (scoreSpan) {
-      scoreSpan.innerText = pred[scoreKey];
-    }
-
-    renderProdeStatsBanner();
+    
+    // Sincronizar llaves y re-renderizar la vista actual para actualizar tablas y brackets
+    updateKnockoutTeams();
+    renderActiveTab();
   });
 }
 
@@ -1775,6 +1844,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setupProdeInputsListener();
   setupProdeToggleHandler();
   setupLiveSyncHandler();
+  setupPwaInstallBtn();
 
   // Registrar eventos para el modal de instalación de iOS
   const iosCloseBtn = document.getElementById('ios-modal-close');
@@ -1794,25 +1864,27 @@ window.addEventListener('beforeinstallprompt', (e) => {
   }
 });
 
-const installBtn = document.getElementById('pwa-install-btn');
-if (installBtn) {
-  installBtn.addEventListener('click', async () => {
-    // Si estamos en iOS, abrimos las instrucciones de Safari
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS) {
-      openIosInstallModal();
-      return;
-    }
+function setupPwaInstallBtn() {
+  const installBtn = document.getElementById('pwa-install-btn');
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      // Si estamos en iOS, abrimos las instrucciones de Safari
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        openIosInstallModal();
+        return;
+      }
 
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      console.log('User accepted the PWA install prompt');
-    }
-    deferredPrompt = null;
-    installBtn.style.display = 'none';
-  });
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the PWA install prompt');
+      }
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+    });
+  }
 }
 
 // Register Service Worker

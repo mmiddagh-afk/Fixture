@@ -55,7 +55,7 @@ export function getCountdown(dateStr, timeStr) {
 }
 
 // Calcula las posiciones dinámicas por grupo (incluyendo partidos finalizados y en vivo)
-export function calculateGroupStandings(matches, teams) {
+export function calculateGroupStandings(matches, teams, predictions = {}, prodeEnabled = false) {
   const standings = {};
 
   // Inicializar grupos con sus equipos vacíos
@@ -83,44 +83,60 @@ export function calculateGroupStandings(matches, teams) {
   });
 
   matches.forEach(match => {
-    // Solo consideramos fase de grupos y partidos jugados o en vivo
-    if (match.stage === "group" && (match.status === "finished" || match.status === "live")) {
-      const group = match.group;
-      const home = match.home;
-      const away = match.away;
-      
-      const homeScore = match.homeScore ?? 0;
-      const awayScore = match.awayScore ?? 0;
+    // Solo consideramos fase de grupos
+    if (match.stage === "group") {
+      let homeScore = 0;
+      let awayScore = 0;
+      let isPlayed = false;
 
-      const homeTeam = standings[group][home];
-      const awayTeam = standings[group][away];
-
-      if (homeTeam && awayTeam) {
-        homeTeam.pj += 1;
-        awayTeam.pj += 1;
-
-        homeTeam.gf += homeScore;
-        homeTeam.gc += awayScore;
-        awayTeam.gf += awayScore;
-        awayTeam.gc += homeScore;
-
-        if (homeScore > awayScore) {
-          homeTeam.g += 1;
-          homeTeam.pts += 3;
-          awayTeam.p += 1;
-        } else if (homeScore < awayScore) {
-          awayTeam.g += 1;
-          awayTeam.pts += 3;
-          homeTeam.p += 1;
-        } else {
-          homeTeam.e += 1;
-          homeTeam.pts += 1;
-          awayTeam.e += 1;
-          awayTeam.pts += 1;
+      if (match.status === "finished" || match.status === "live") {
+        homeScore = match.homeScore ?? 0;
+        awayScore = match.awayScore ?? 0;
+        isPlayed = true;
+      } else if (prodeEnabled) {
+        const pred = predictions[match.id];
+        if (pred !== undefined && pred !== null) {
+          homeScore = pred.homeScore ?? 0;
+          awayScore = pred.awayScore ?? 0;
+          isPlayed = true;
         }
+      }
 
-        homeTeam.gd = homeTeam.gf - homeTeam.gc;
-        awayTeam.gd = awayTeam.gf - awayTeam.gc;
+      if (isPlayed) {
+        const group = match.group;
+        const home = match.home;
+        const away = match.away;
+
+        const homeTeam = standings[group][home];
+        const awayTeam = standings[group][away];
+
+        if (homeTeam && awayTeam) {
+          homeTeam.pj += 1;
+          awayTeam.pj += 1;
+
+          homeTeam.gf += homeScore;
+          homeTeam.gc += awayScore;
+          awayTeam.gf += awayScore;
+          awayTeam.gc += homeScore;
+
+          if (homeScore > awayScore) {
+            homeTeam.g += 1;
+            homeTeam.pts += 3;
+            awayTeam.p += 1;
+          } else if (homeScore < awayScore) {
+            awayTeam.g += 1;
+            awayTeam.pts += 3;
+            homeTeam.p += 1;
+          } else {
+            homeTeam.e += 1;
+            homeTeam.pts += 1;
+            awayTeam.e += 1;
+            awayTeam.pts += 1;
+          }
+
+          homeTeam.gd = homeTeam.gf - homeTeam.gc;
+          awayTeam.gd = awayTeam.gf - awayTeam.gc;
+        }
       }
     }
   });
