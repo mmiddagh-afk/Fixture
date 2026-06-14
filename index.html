@@ -13,6 +13,7 @@
   
   <link rel="stylesheet" href="css/styles.css">
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
 </head>
 <body>
   
@@ -67,26 +68,52 @@
       <p class="app-subtitle">Fixture & Resultados en Tiempo Real</p>
     </header>
 
-    <!-- Navigation Bar -->
-    <nav class="app-nav">
-      <button class="nav-tab active" data-tab="hoy">
-        <span class="tab-icon">📅</span>
-        <span class="tab-label">Hoy</span>
-      </button>
-      <button class="nav-tab" data-tab="grupos">
-        <span class="tab-icon">🏆</span>
-        <span class="tab-label">Grupos</span>
-      </button>
-      <button class="nav-tab" data-tab="eliminatorias">
-        <span class="tab-icon">⚡</span>
-        <span class="tab-label">Llaves</span>
-      </button>
-      <button class="nav-tab" data-tab="tablas">
-        <span class="tab-icon">📊</span>
-        <span class="tab-label">Tablas</span>
-      </button>
-      <div class="nav-underline"></div>
-    </nav>
+    <!-- Desktop Sidebar (visible solo ≥1024px via CSS) -->
+    <aside class="desktop-sidebar">
+      <!-- Navigation Bar -->
+      <nav class="app-nav">
+        <button class="nav-tab active" data-tab="hoy">
+          <span class="tab-icon">📅</span>
+          <span class="tab-label">Hoy</span>
+        </button>
+        <button class="nav-tab" data-tab="grupos">
+          <span class="tab-icon">🏆</span>
+          <span class="tab-label">Grupos</span>
+        </button>
+        <button class="nav-tab" data-tab="eliminatorias">
+          <span class="tab-icon">⚡</span>
+          <span class="tab-label">Llaves</span>
+        </button>
+        <button class="nav-tab" data-tab="tablas">
+          <span class="tab-icon">📊</span>
+          <span class="tab-label">Tablas</span>
+        </button>
+        <div class="nav-underline"></div>
+      </nav>
+
+      <!-- Desktop Sidebar Widgets (contenido extra solo visible en desktop) -->
+      <div class="sidebar-widgets">
+        <div class="sidebar-widget sidebar-tournament-info">
+          <div class="sidebar-widget-title">🏆 Torneo</div>
+          <div class="sidebar-info-row">
+            <span class="sidebar-info-label">Equipos</span>
+            <span class="sidebar-info-value">48</span>
+          </div>
+          <div class="sidebar-info-row">
+            <span class="sidebar-info-label">Partidos</span>
+            <span class="sidebar-info-value">104</span>
+          </div>
+          <div class="sidebar-info-row">
+            <span class="sidebar-info-label">Sedes</span>
+            <span class="sidebar-info-value">16</span>
+          </div>
+          <div class="sidebar-info-row">
+            <span class="sidebar-info-label">Países</span>
+            <span class="sidebar-info-value">3</span>
+          </div>
+        </div>
+      </div>
+    </aside>
 
     <!-- Main Views Container -->
     <main class="app-main">
