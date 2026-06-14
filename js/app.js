@@ -6,8 +6,24 @@ import { formatBoliviaTime, getCountdown, calculateGroupStandings, convertToAmPm
 // ==========================================================================
 // Configuración de la API para sincronización de marcadores en vivo (Client-Side)
 const API_CONFIG = {
-  provider: 'statsapi', // 'statsapi'
-  endpoint: 'https://www.thestatsapi.com/world-cup/data/fixtures.json'
+  provider: 'worldcupapi',
+  endpoint: 'https://worldcup26.ir/get/games'
+};
+
+const TEAM_MAP = {
+  ARG: "Argentina", FRA: "France", ENG: "England", BRA: "Brazil",
+  POR: "Portugal", ESP: "Spain", GER: "Germany", NED: "Netherlands",
+  JPN: "Japan", USA: "United States", MEX: "Mexico", CAN: "Canada",
+  URU: "Uruguay", COL: "Colombia", CRO: "Croatia", BEL: "Belgium",
+  MAR: "Morocco", SEN: "Senegal", KOR: "South Korea", SUI: "Switzerland",
+  SWE: "Sweden", ECU: "Ecuador", PAR: "Paraguay", TUN: "Tunisia",
+  ALG: "Algeria", EGY: "Egypt", GHA: "Ghana", CIV: "Ivory Coast",
+  RSA: "South Africa", PAN: "Panama", AUS: "Australia", NZL: "New Zealand",
+  IRN: "Iran", IRQ: "Iraq", KSA: "Saudi Arabia", QAT: "Qatar",
+  UZB: "Uzbekistan", CZE: "Czech Republic", BIH: "Bosnia and Herzegovina",
+  HAI: "Haiti", SCO: "Scotland", TUR: "Turkey", CUW: "Curaçao",
+  COD: "Democratic Republic of the Congo", JOR: "Jordan", CPV: "Cape Verde",
+  NOR: "Norway", AUT: "Austria"
 };
 
 const state = {
@@ -91,21 +107,21 @@ async function fetchLiveScores() {
   try {
     let apiUpdated = 0;
 
-    // 1. Intentar descargar de la API oficial (TheStatsAPI)
+    // 1. Intentar descargar de la API oficial (worldcup26.ir)
     try {
       const res = await fetch(API_CONFIG.endpoint);
       if (res.ok) {
         const data = await res.json();
         let matchesData = [];
-        if (API_CONFIG.provider === 'statsapi') {
-          matchesData = data.fixtures || [];
+        if (API_CONFIG.provider === 'worldcupapi') {
+          matchesData = data.games || [];
         }
         if (matchesData.length > 0) {
           apiUpdated = syncLiveMatches(matchesData);
         }
       }
     } catch (apiErr) {
-      console.warn('No se pudo conectar a TheStatsAPI, usando hora del sistema:', apiErr);
+      console.warn('No se pudo conectar a la API de worldcup26.ir, usando hora del sistema:', apiErr);
     }
 
     // 2. Sincronizar partidos en base al reloj del sistema local
@@ -241,18 +257,49 @@ function syncLiveMatches(liveMatches) {
   let updatedCount = 0;
 
   state.matches.forEach(match => {
-    const liveMatch = liveMatches.find(lm => (lm.id === match.id) || (lm.matchNumber === match.id));
-    if (liveMatch) {
-      if (liveMatch.status === 'live' || liveMatch.status === 'finished') {
-        const hasScoreChanged = match.homeScore !== liveMatch.homeScore || match.awayScore !== liveMatch.awayScore;
-        const hasStatusChanged = match.status !== liveMatch.status;
-        const hasMinuteChanged = match.minute !== liveMatch.minute;
+    // Si el usuario ingresó manualmente el marcador, no lo tocamos
+    if (match.isManual) {
+      return;
+    }
 
-        if (hasScoreChanged || hasStatusChanged || hasMinuteChanged) {
-          match.status = liveMatch.status;
-          match.homeScore = liveMatch.homeScore;
-          match.awayScore = liveMatch.awayScore;
-          match.minute = liveMatch.minute || (liveMatch.status === 'live' ? 1 : null);
+    // Obtener los nombres en inglés de la API para los equipos locales
+    const homeApiName = TEAM_MAP[match.home];
+    const awayApiName = TEAM_MAP[match.away];
+
+    if (!homeApiName || !awayApiName) return;
+
+    // Buscar el partido en los datos de la API por coincidencia de equipos (ignora el ID local)
+    const liveMatch = liveMatches.find(lm => 
+      (lm.home_team_name_en === homeApiName && lm.away_team_name_en === awayApiName) ||
+      (lm.home_team_name_en === awayApiName && lm.away_team_name_en === homeApiName)
+    );
+
+    if (liveMatch) {
+      const isFinished = liveMatch.finished === "TRUE";
+      const isLive = liveMatch.finished === "FALSE" && liveMatch.time_elapsed !== "notstarted" && liveMatch.time_elapsed !== "not_started";
+      
+      const isSwapped = liveMatch.home_team_name_en === awayApiName; // Si están invertidos local/visitante
+      
+      const rawHomeScore = isSwapped ? liveMatch.away_score : liveMatch.home_score;
+      const rawAwayScore = isSwapped ? liveMatch.home_score : liveMatch.away_score;
+
+      const homeScore = (rawHomeScore !== null && rawHomeScore !== undefined && rawHomeScore !== "null") ? Number(rawHomeScore) : null;
+      const awayScore = (rawAwayScore !== null && rawAwayScore !== undefined && rawAwayScore !== "null") ? Number(rawAwayScore) : null;
+
+      let newStatus = 'upcoming';
+      if (isFinished) newStatus = 'finished';
+      else if (isLive) newStatus = 'live';
+
+      if (newStatus === 'finished' || newStatus === 'live') {
+        const scoreChanged = match.homeScore !== homeScore || match.awayScore !== awayScore;
+        const statusChanged = match.status !== newStatus;
+        const minuteChanged = match.minute !== liveMatch.time_elapsed;
+
+        if (scoreChanged || statusChanged || minuteChanged) {
+          match.status = newStatus;
+          match.homeScore = homeScore;
+          match.awayScore = awayScore;
+          match.minute = newStatus === 'live' ? (liveMatch.time_elapsed || "1'") : null;
           updatedCount++;
         }
       }

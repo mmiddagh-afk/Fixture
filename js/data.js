@@ -110,8 +110,8 @@ function generateGroupMatches() {
 
     // === 14 de Junio ===
     m(8,  "group", "D", "2026-06-14", "00:00", "AUS", "TUR", "BC Place, Vancouver 🇨🇦", "finished", 2, 2),
-    m(9,  "group", "E", "2026-06-14", "13:00", "GER", "CUW", "NRG Stadium, Houston 🇺🇸", "finished", 3, 0),
-    m(10, "group", "F", "2026-06-14", "16:00", "NED", "JPN", "AT&T Stadium, Dallas 🇺🇸", "finished", 2, 1),
+    m(9,  "group", "E", "2026-06-14", "13:00", "GER", "CUW", "NRG Stadium, Houston 🇺🇸"),
+    m(10, "group", "F", "2026-06-14", "16:00", "NED", "JPN", "AT&T Stadium, Dallas 🇺🇸"),
     m(11, "group", "F", "2026-06-14", "22:00", "SWE", "TUN", "Estadio BBVA, Monterrey 🇲🇽"),
     m(12, "group", "E", "2026-06-14", "20:00", "CIV", "ECU", "Lincoln Financial Field, Filadelfia 🇺🇸"),
 
