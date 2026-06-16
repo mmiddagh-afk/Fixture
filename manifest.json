@@ -1,6 +1,7 @@
 {
   "short_name": "Fixture 2026",
-  "name": "Fixture Mundial 2026 - Tiempo Real",
+  "name": "Mundial 2026 — Fixture y Resultados en Vivo",
+  "description": "Fixture completo, resultados en tiempo real, tablas de posiciones y llaves del Mundial 2026.",
   "icons": [
     {
       "src": "icon.svg",
@@ -13,5 +14,7 @@
   "background_color": "#0a0e1a",
   "theme_color": "#0a0e1a",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "lang": "es",
+  "categories": ["sports"]
 }
