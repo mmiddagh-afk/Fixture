@@ -2696,12 +2696,71 @@ html, body {
     box-shadow: none;
     display: grid;
     grid-template-columns: 260px 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto 1fr;
     grid-template-areas:
       "header  header"
-      "sidebar main"
-      "footer  footer";
+      "nav     main"
+      "sidebar main";
     overflow: hidden;
+  }
+
+  /* Nav goes into the sidebar column on desktop */
+  .app-nav {
+    grid-area: nav;
+    order: unset;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 16px;
+    background: rgba(8, 11, 22, 0.9);
+    border-top: none;
+    border-bottom: 1px solid var(--glass-border);
+    border-right: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    gap: 4px;
+    position: relative;
+  }
+
+  .nav-tab {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    border-radius: 12px;
+    gap: 12px;
+    color: var(--text-secondary);
+    transition: var(--transition-smooth);
+    position: relative;
+  }
+
+  .nav-tab .tab-icon {
+    font-size: 1.15rem;
+    margin-bottom: 0;
+    width: 24px;
+    text-align: center;
+  }
+
+  .nav-tab .tab-label {
+    font-size: 0.88rem;
+  }
+
+  .nav-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+  }
+
+  .nav-tab.active {
+    background: rgba(255, 215, 0, 0.08);
+    color: var(--text-primary);
+    font-weight: 600;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+  }
+
+  /* Ocultar la pill underline animada en desktop */
+  .nav-underline {
+    display: none;
   }
 
   /* --- HEADER --- */
@@ -2791,7 +2850,7 @@ html, body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
-  /* --- DESKTOP SIDEBAR --- */
+  /* --- DESKTOP SIDEBAR (now widgets only) --- */
   .desktop-sidebar {
     grid-area: sidebar;
     display: flex;
@@ -2822,63 +2881,6 @@ html, body {
       rgba(255, 215, 0, 0.08) 70%,
       transparent 100%
     );
-  }
-
-  /* SIDEBAR NAV: Vertical tabs */
-  .desktop-sidebar .app-nav {
-    order: unset;
-    display: flex;
-    flex-direction: column;
-    padding: 20px 16px;
-    background: transparent;
-    border-top: none;
-    border-bottom: 1px solid var(--glass-border);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    gap: 4px;
-    position: relative;
-  }
-
-  .desktop-sidebar .nav-tab {
-    flex: none;
-    flex-direction: row;
-    justify-content: flex-start;
-    padding: 12px 16px;
-    font-size: 0.88rem;
-    font-weight: 500;
-    border-radius: 12px;
-    gap: 12px;
-    color: var(--text-secondary);
-    transition: var(--transition-smooth);
-    position: relative;
-  }
-
-  .desktop-sidebar .nav-tab .tab-icon {
-    font-size: 1.15rem;
-    margin-bottom: 0;
-    width: 24px;
-    text-align: center;
-  }
-
-  .desktop-sidebar .nav-tab .tab-label {
-    font-size: 0.88rem;
-  }
-
-  .desktop-sidebar .nav-tab:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-  }
-
-  .desktop-sidebar .nav-tab.active {
-    background: rgba(255, 215, 0, 0.08);
-    color: var(--text-primary);
-    font-weight: 600;
-    border: 1px solid rgba(255, 215, 0, 0.15);
-  }
-
-  /* Ocultar la pill underline animada en el sidebar vertical */
-  .desktop-sidebar .nav-underline {
-    display: none;
   }
 
   /* SIDEBAR WIDGETS */
