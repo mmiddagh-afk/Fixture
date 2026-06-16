@@ -96,9 +96,9 @@ function saveState() {
 // ==========================================================================
 // SINCRONIZACIÓN DE MARCADORES EN VIVO (CLIENT-SIDE)
 // ==========================================================================
-async function fetchLiveScores() {
+async function fetchLiveScores(silent = false) {
   const btn = document.getElementById('btn-sync-live');
-  if (btn) {
+  if (!silent && btn) {
     btn.classList.add('loading');
     const textSpan = btn.querySelector('.sync-text');
     if (textSpan) textSpan.innerText = 'Sincronizando...';
@@ -129,16 +129,20 @@ async function fetchLiveScores() {
 
     const totalUpdated = apiUpdated + systemUpdated;
 
-    if (totalUpdated > 0) {
-      showSyncNotification(`¡Sincronizado! Se actualizaron ${totalUpdated} partidos. 🏆`, 'success');
-    } else {
-      showSyncNotification('Sincronizado. No hay nuevos cambios en vivo. 👍', 'success');
+    if (!silent) {
+      if (totalUpdated > 0) {
+        showSyncNotification(`¡Sincronizado! Se actualizaron ${totalUpdated} partidos. 🏆`, 'success');
+      } else {
+        showSyncNotification('Sincronizado. No hay nuevos cambios en vivo. 👍', 'success');
+      }
     }
   } catch (err) {
     console.error('Error al sincronizar marcadores:', err);
-    showSyncNotification('Error al sincronizar marcadores. Intente de nuevo. ❌', 'error');
+    if (!silent) {
+      showSyncNotification('Error al sincronizar marcadores. Intente de nuevo. ❌', 'error');
+    }
   } finally {
-    if (btn) {
+    if (!silent && btn) {
       btn.classList.remove('loading');
       const textSpan = btn.querySelector('.sync-text');
       if (textSpan) textSpan.innerText = 'Sincronizar';
@@ -2291,6 +2295,9 @@ window.addEventListener('DOMContentLoaded', () => {
   setupLiveSyncHandler();
   setupPwaInstallBtn();
   setupAdminHandlers();
+
+  // Auto-sync desde la API al cargar la página (silencioso, sin notificaciones)
+  fetchLiveScores(true);
 
   // Registrar eventos para el modal de instalación de iOS
   const iosCloseBtn = document.getElementById('ios-modal-close');
