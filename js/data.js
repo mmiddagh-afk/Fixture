@@ -104,21 +104,21 @@ function generateGroupMatches() {
     m(4,  "group", "D", "2026-06-12", "21:00", "USA", "PAR", "SoFi Stadium, Los Ángeles 🇺🇸", "finished", 4, 1),
 
     // === 13 de Junio ===
-    m(5,  "group", "B", "2026-06-13", "15:00", "QAT", "SUI", "San Francisco Stadium 🇺🇸", "finished", 0, 2),
-    m(6,  "group", "C", "2026-06-13", "18:00", "BRA", "MAR", "MetLife Stadium, NY/NJ 🇺🇸", "finished", 3, 1),
-    m(7,  "group", "C", "2026-06-13", "21:00", "HAI", "SCO", "Gillette Stadium, Boston 🇺🇸", "finished", 1, 2),
+    m(5,  "group", "B", "2026-06-13", "15:00", "QAT", "SUI", "San Francisco Stadium 🇺🇸", "finished", 1, 1),
+    m(6,  "group", "C", "2026-06-13", "18:00", "BRA", "MAR", "MetLife Stadium, NY/NJ 🇺🇸", "finished", 1, 1),
+    m(7,  "group", "C", "2026-06-13", "21:00", "HAI", "SCO", "Gillette Stadium, Boston 🇺🇸", "finished", 0, 1),
 
     // === 14 de Junio ===
-    m(8,  "group", "D", "2026-06-14", "00:00", "AUS", "TUR", "BC Place, Vancouver 🇨🇦", "finished", 2, 2),
-    m(9,  "group", "E", "2026-06-14", "13:00", "GER", "CUW", "NRG Stadium, Houston 🇺🇸"),
-    m(10, "group", "F", "2026-06-14", "16:00", "NED", "JPN", "AT&T Stadium, Dallas 🇺🇸"),
-    m(11, "group", "F", "2026-06-14", "22:00", "SWE", "TUN", "Estadio BBVA, Monterrey 🇲🇽"),
-    m(12, "group", "E", "2026-06-14", "20:00", "CIV", "ECU", "Lincoln Financial Field, Filadelfia 🇺🇸"),
+    m(8,  "group", "D", "2026-06-14", "00:00", "AUS", "TUR", "BC Place, Vancouver 🇨🇦", "finished", 2, 0),
+    m(9,  "group", "E", "2026-06-14", "13:00", "GER", "CUW", "NRG Stadium, Houston 🇺🇸", "finished", 7, 1),
+    m(10, "group", "F", "2026-06-14", "16:00", "NED", "JPN", "AT&T Stadium, Dallas 🇺🇸", "finished", 2, 2),
+    m(11, "group", "F", "2026-06-14", "22:00", "SWE", "TUN", "Estadio BBVA, Monterrey 🇲🇽", "finished", 5, 1),
+    m(12, "group", "E", "2026-06-14", "20:00", "CIV", "ECU", "Lincoln Financial Field, Filadelfia 🇺🇸", "finished", 1, 0),
 
     // === 15 de Junio ===
-    m(13, "group", "H", "2026-06-15", "12:00", "ESP", "CPV", "Mercedes-Benz Stadium, Atlanta 🇺🇸"),
-    m(14, "group", "G", "2026-06-15", "15:00", "BEL", "EGY", "Lumen Field, Seattle 🇺🇸"),
-    m(15, "group", "H", "2026-06-15", "18:00", "KSA", "URU", "Hard Rock Stadium, Miami 🇺🇸"),
+    m(13, "group", "H", "2026-06-15", "12:00", "ESP", "CPV", "Mercedes-Benz Stadium, Atlanta 🇺🇸", "finished", 0, 0),
+    m(14, "group", "G", "2026-06-15", "15:00", "BEL", "EGY", "Lumen Field, Seattle 🇺🇸", "finished", 1, 1),
+    m(15, "group", "H", "2026-06-15", "18:00", "KSA", "URU", "Hard Rock Stadium, Miami 🇺🇸", "finished", 1, 1),
     m(16, "group", "G", "2026-06-15", "21:00", "IRN", "NZL", "SoFi Stadium, Los Ángeles 🇺🇸"),
 
     // === 16 de Junio ===
