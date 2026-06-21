@@ -106,6 +106,7 @@ async function fetchLiveScores(silent = false) {
 
   try {
     let apiUpdated = 0;
+    let apiSyncedIds = new Set();
 
     // 1. Intentar descargar de la API oficial (worldcup26.ir)
     try {
@@ -117,7 +118,9 @@ async function fetchLiveScores(silent = false) {
           matchesData = data.games || [];
         }
         if (matchesData.length > 0) {
-          apiUpdated = syncLiveMatches(matchesData);
+          const result = syncLiveMatches(matchesData);
+          apiUpdated = result.count;
+          apiSyncedIds = result.ids;
         }
       }
     } catch (apiErr) {
@@ -125,7 +128,8 @@ async function fetchLiveScores(silent = false) {
     }
 
     // 2. Sincronizar partidos en base al reloj del sistema local
-    const systemUpdated = syncMatchesBySystemTime();
+    // IMPORTANTE: omitir los partidos que ya actualizó la API con datos reales
+    const systemUpdated = syncMatchesBySystemTime(apiSyncedIds);
 
     const totalUpdated = apiUpdated + systemUpdated;
 
@@ -150,11 +154,14 @@ async function fetchLiveScores(silent = false) {
   }
 }
 
-function syncMatchesBySystemTime() {
+function syncMatchesBySystemTime(apiSyncedIds = new Set()) {
   let updatedCount = 0;
   const now = Date.now();
 
   state.matches.forEach(match => {
+    // Si la API ya actualizó este partido con datos reales, no lo pisamos con datos falsos
+    if (apiSyncedIds.has(match.id)) return;
+
     // Si el partido está bloqueado oficialmente en data.js, respetamos ese marcador oficial
     const officialMatch = INITIAL_MATCHES.find(om => om.id === match.id);
     const isOfficiallyFinished = officialMatch && officialMatch.status === 'finished';
@@ -259,6 +266,7 @@ function getProgressiveScore(matchId, finalScore, currentMinute, teamType) {
 
 function syncLiveMatches(liveMatches) {
   let updatedCount = 0;
+  const syncedIds = new Set();
 
   state.matches.forEach(match => {
     // Si el usuario ingresó manualmente el marcador, no lo tocamos
@@ -294,7 +302,10 @@ function syncLiveMatches(liveMatches) {
       if (isFinished) newStatus = 'finished';
       else if (isLive) newStatus = 'live';
 
-      if (newStatus === 'finished' || newStatus === 'live') {
+      // Marcar que la API reconoció este partido (aunque no haya cambiado)
+      // para que syncMatchesBySystemTime no lo pise con datos falsos
+      if (isFinished || isLive) {
+        syncedIds.add(match.id);
         const scoreChanged = match.homeScore !== homeScore || match.awayScore !== awayScore;
         const statusChanged = match.status !== newStatus;
         const minuteChanged = match.minute !== liveMatch.time_elapsed;
@@ -316,7 +327,7 @@ function syncLiveMatches(liveMatches) {
     renderActiveTab();
   }
   
-  return updatedCount;
+  return { count: updatedCount, ids: syncedIds };
 }
 
 function showSyncNotification(message, type = 'success') {
